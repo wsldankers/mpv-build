@@ -8,6 +8,6 @@ if "$BUILD"/scripts/test-libmpv ; then
     OPTIONS="$OPTIONS --with-pic"
 fi
 
-cd "$BUILD"/fribidi
+cd "$config_fribidi_source"
 ./bootstrap
-./configure --prefix="$BUILD/build_libs" --libdir="$BUILD/build_libs/lib" --enable-static --disable-shared --without-glib $OPTIONS
+./configure --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared --without-glib $OPTIONS

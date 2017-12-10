@@ -14,10 +14,28 @@ get_version()
     )
 }
 
+# $1: main project name, $2 main project revision, $3: "lib1-name lib1-rev, ..."
 do_subst() {
-    sed  -e "0,/^mpv (.*)/s/(.*)/($1)/" \
-	      -e "s/^  \* local build.*/  \* local build with ffmpeg $2, libass $3/" \
+    sed  -e "0,/^$1 (.*)/s/(.*)/($2)/" \
+	      -e "s/^  \* local build.*/  \* local build with $3/" \
 	      -e"s/\(^ -- Local User <localuser@localhost>\).*/\1  $(date -R)/" debian/changelog.TEMPLATE > debian/changelog
 }
 
-do_subst $(get_version mpv) $(get_version ffmpeg) $(get_version libass)
+# args: $1: valid variable name to print its value
+var_val() { eval printf %s \"\$$1\"; }
+
+# args: individual names of the active projects - the last is considered main.
+update_changelog() {
+    local deps=
+    [ $# = 0 ] && echo "Error: no project names" && exit 1
+    while [ $# -gt 1 ]; do
+        [ "$deps" ] && deps="$deps, "
+        deps="$deps$1 $(get_version "$(var_val "config_${1}_source")")"
+        shift
+    done
+    [ "$deps" ] || deps="no local libs"
+
+    do_subst "$1" "$(get_version "$(var_val "config_${1}_source")")" "$deps"
+}
+
+update_changelog $config_projects

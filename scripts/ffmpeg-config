@@ -30,10 +30,10 @@ fi
 
 case "$PKG_CONFIG_PATH" in
   '')
-    export PKG_CONFIG_PATH="$BUILD/build_libs/lib/pkgconfig"
+    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig"
     ;;
   *)
-    export PKG_CONFIG_PATH="$BUILD/build_libs/lib/pkgconfig:$PKG_CONFIG_PATH"
+    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
     ;;
 esac
 
@@ -41,4 +41,4 @@ echo Using ffmpeg options: $OPTIONS
 
 mkdir -p "$BUILD"/ffmpeg_build
 cd "$BUILD"/ffmpeg_build
-"$BUILD"/ffmpeg/configure --prefix="$BUILD"/build_libs --enable-static --disable-shared $OPTIONS
+"$config_ffmpeg_source"/configure --prefix="$config_local_prefix" --enable-static --disable-shared $OPTIONS

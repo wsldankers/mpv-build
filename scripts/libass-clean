@@ -1,5 +1,5 @@
 #!/bin/sh
 
-if [ -f libass/Makefile ];then
-    make -C libass distclean
+if [ -f "$config_libass_source"/Makefile ];then
+    make -C "$config_libass_source" distclean
 fi

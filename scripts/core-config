@@ -1,0 +1,165 @@
+#!/bin/sh
+# This file must be sourced without arguments, assumes pwd is mpv-build-root.
+# Applies ./config/default.conf and ./user.conf, validates, and adds utilities.
+#
+# If $config_process_projects_cli is non empty, also applies CLI project args
+# on top of the config (overlays it) with some validation, and eats them,
+# leaving only the non-project args (and also eats '--' if exists).
+#
+# Finally, validates the final config (or dies) and exports global config
+# variables and project source paths variables (the other config values are
+# available to the script which sourced us, just not exported).
+
+# utils. split to their own script if some clients need those without the rest
+
+# args: $1: valid variable name, $2: value to set it to
+var_set() {
+    eval $1=\"\$2\"
+}
+
+# args: $1: valid variable name to print its value
+var_val() {
+    eval printf %s \"\$$1\"
+}
+
+# $1: non empty if printing to a tty, empty for plain passthrough.
+# $2: SGR sequence content (without \e[ and m). $3: string to wrap + reset.
+sgr_if_tty() {
+    [ -z "$1" ] && printf %s "$3" && return
+    printf "\033[%sm%s\033[m" "$2" "$3"
+}
+
+# isatty outside subshels - if the caller takes the output then it's not a tty
+[ -t 1 ] && out_tty=yes || out_tty=
+[ -t 2 ] && err_tty=yes || err_tty=
+
+# $1: string to print
+highlight_msg() {
+    printf "%s\n" "$(sgr_if_tty "$out_tty" 36 "${msg_prefix}$1")"
+}
+
+# $1: string to print
+success_msg() {
+    printf "%s\n" "$(sgr_if_tty "$out_tty" 32 "${msg_prefix}Success: $1")"
+}
+
+# $1: string to print
+err_msg_die() {
+    >&2 printf "%s\n" "$(sgr_if_tty "$err_tty" 31 "${msg_prefix}Error: $1")"
+    exit 1
+}
+
+# succeeds if "$1" is non empty and consists of only [0-9a-zA-Z_] chars
+# we allow to start with a number because project names don't start an id.
+is_valid_id() {
+    [ -z "$1" ] && return 1
+    case "$1" in *[!0-9a-zA-Z_]*) return 1; esac
+}
+
+# if "$1" is not a valid id then print a message and exit
+validate_id_or_die() {
+    is_valid_id "$1" || err_msg_die "invalid project name '$1'"
+}
+
+# $1: var name. if we can cd into its value, change it to full path, else die.
+var_to_real_dir_or_die() {
+    set -- "$1" "$([ "$(var_val $1)" ] && cd "$(var_val $1)" && printf %s "$(pwd)")"
+    [ "$2" ] || err_msg_die "cannot cd to '$(var_val $1)'"
+    var_set $1 "$2"
+}
+
+# succeeds if invoked with at least one argument
+has_args() {
+    [ $# -gt 0 ]
+}
+
+# $1: hook value (empty for no-op) [,$2 ... : additional arguments to pass]
+# Just execute in a subshell so it cannot affect the host even if function.
+hook_or_die() {
+    [ -z "$1" ] || ("$@") || err_msg_die "hook failed: '$@'"
+}
+
+# $1: valid id, $2: space-separated valid IDs. returns true if $1 is in $2
+id_in() {
+    case " $2 " in *\ $1\ *) return; esac
+    return 1
+}
+
+# utils - end.
+
+
+# args: none. checks that project names exist, have valid names, and their
+# source dirs are known. Creates the $config_local_prefix dir and export its
+# full path. export globals + source-dirs of active-project. existing dirs
+# ensured to be exported as full paths. msg and die on errors.
+finalize_config_export_or_die() {
+    local p=
+    [ "${config_projects:-}" ] || err_msg_die "no projects to process"
+    for p in $config_projects; do
+        validate_id_or_die "$p"
+        [ "$(var_val config_${p}_source)" ] || err_msg_die "unknown source-dir for '$p'"
+        [ -d "$(var_val config_${p}_source)" ] && var_to_real_dir_or_die config_${p}_source
+        export config_${p}_source
+    done
+    export config_projects
+
+    # Cannot be overridden by user.conf - read its value from config/default.conf
+    config_local_prefix=
+    config_local_prefix="$(. config/default.conf && printf %s "$config_local_prefix")"
+    [ "$config_local_prefix" ] || err_msg_die "missing \$config_local_prefix"
+    mkdir -p "$config_local_prefix" || err_msg_die "cannot create dir '$config_local_prefix'"
+    var_to_real_dir_or_die config_local_prefix
+    export config_local_prefix
+}
+
+# project arguments are all the arguments before the first argument which
+# starts with '-' (could be -- or -j8 etc)
+# each project argument is <name>[/<update-val>] e.g. ffmpeg or ffmpeg/release
+# or ffmpeg/@n3.3.1 etc. <name> must be only alphanumeric and/or _ (verified).
+# the list of CLI project names, if not empty, sets (replaces) $config_projects .
+# the CLI update value for each project FOO, if exists, sets $config_FOO_update .
+# dies with a message on invalid project name.
+apply_project_args() {
+    local projects=
+    local proj=
+    local update=
+    for proj in "$@"; do
+        [ "$proj" ] && [ -z "${proj##-*}" ] && break  # abort on first -* arg
+
+        update="${proj#*/}"  # remove the smallest */ prefix
+        [ "$update" = "$proj" ] && update=  # empty if there wass no such prefix
+        proj="${proj%%/*}"  # remove the biggest /* suffix
+        validate_id_or_die "$proj"
+
+        [ "$projects" ] && projects="$projects "
+        projects="${projects}${proj}"
+
+        [ "$update" ] && var_set config_${proj}_update "$update"
+    done
+    [ "$projects" ] && config_projects="$projects"
+}
+
+# main
+
+# apply default and user config values
+. config/default.conf
+[ -f ./user.conf ] && . ./user.conf
+
+[ "${config_title:-}" ] && msg_prefix="[$config_title] " || msg_prefix=
+
+# The CLI arguments are always [<projects-args>] [[--] <other-arguments>]
+# we apply the project-args ones to the config and then eat them [and '--'].
+# we leave <other-arguments> for the caller to handle, if it wants to.
+# Some config/CLI values may end up ignored, for instance clean only looks at
+# the projects list, update looks at the projects and update vals, while build
+# ignores the update vals but uses additional other-arguments.
+if [ $# -gt 0 ] && [ "${config_process_projects_cli:-}" ]; then
+    apply_project_args "$@"
+
+    while [ $# -gt 0 ] && [ "${1##-*}" ]; do shift; done
+    [ $# -gt 0 ] && [ "$1" = "--" ] && shift
+    # now "$@" is only other-arguments (possibly none)
+fi
+
+# validate and export global vars and source paths of active projects
+finalize_config_export_or_die
