@@ -30,14 +30,14 @@ install:
 	exec dh $@
 
 libass_config:
-	scripts/libass-config
+	./build --mode=config libass
 
 libass_build: libass_config
-	scripts/libass-build $(MFLAGS)
+	./build --mode=build libass -- $(MFLAGS)
 
 # depend on libass_build in case the user specified --enable-libass in ffmpeg_options
 ffmpeg_config: libass_build
-	scripts/ffmpeg-config \
+	./build --mode=config ffmpeg -- \
 		--enable-gnutls \
 		--enable-libgme \
 		--enable-libgsm \
@@ -59,11 +59,11 @@ ffmpeg_config: libass_build
 		--enable-version3 --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc
 
 ffmpeg_build: ffmpeg_config
-	scripts/ffmpeg-build $(MFLAGS)
+	./build --mode=build ffmpeg -- $(MFLAGS)
 
 # put the config in the right place and drop the local/ since it's package managed now
 override_dh_auto_configure: ffmpeg_build libass_build
-	scripts/mpv-config --prefix=/usr --confdir=/etc/mpv \
+	./build --mode=config mpv -- --prefix=/usr --confdir=/etc/mpv \
 		--enable-openal \
 		--enable-dvdread \
 		--enable-dvdnav \
@@ -72,16 +72,18 @@ override_dh_auto_configure: ffmpeg_build libass_build
 		--enable-zsh-comp
 
 override_dh_auto_build:
-	scripts/mpv-build $(WAFLAGS)
+	./build --mode=build mpv -- $(WAFLAGS)
 
+MPV_SRC=$(shell ./get-config -- config_mpv_source)
+BUILD_ROOT=$(shell pwd)
 
-DOCSOURCE=mpv/DOCS
-TOOLSSOURCE=mpv/TOOLS
+DOCSOURCE=$(MPV_SRC)/DOCS
+TOOLSSOURCE=$(MPV_SRC)/TOOLS
 DOCDEST=debian/mpv/usr/share/doc/mpv
 TOOLSDEST=$(DOCDEST)/TOOLS
 # call waf to install to the debian packageing dir
 override_dh_auto_install:
-	cd mpv && python waf -v install --destdir=../debian/mpv
+	./install mpv -- -v --destdir="$(BUILD_ROOT)/debian/mpv"
 
 	find "$(DOCSOURCE)" -mindepth 1 -type d \
 	-not -regex '.*man.*' \
