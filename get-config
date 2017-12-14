@@ -1,0 +1,12 @@
+#!/bin/sh
+export LC_ALL=C
+
+cd "$(dirname "$0")"
+config_process_projects_cli=yes
+. scripts/core-config || exit 1
+
+[ $# -gt 0 ] || err_msg_die "Usage: $(basename "$0") [projects-arguments] -- <config-var-name>"
+[ "$1" = "${1#config_}" ] && err_msg_die "variable name must start with config_"
+has_var "$1" || err_msg_die "cannot evaluate config variable '$1'"
+
+printf %s "$(var_val $1)"

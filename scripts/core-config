@@ -22,6 +22,11 @@ var_val() {
     eval printf %s \"\$$1\"
 }
 
+# Succeeds if "$1" is a variable name which is already set (null is ok).
+has_var() {
+    is_valid_id "$1" && (eval [ \"\${$1+set}\" ]) 2> /dev/null
+}
+
 # args: any. prints the last argument. error (without dieing) if no args.
 last_arg() {
     [ $# -gt 0 ] && eval printf %s \"\$$#\" || false
