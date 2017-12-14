@@ -22,6 +22,11 @@ var_val() {
     eval printf %s \"\$$1\"
 }
 
+# args: any. prints the last argument. error (without dieing) if no args.
+last_arg() {
+    [ $# -gt 0 ] && eval printf %s \"\$$#\" || false
+}
+
 # $1: non empty if printing to a tty, empty for plain passthrough.
 # $2: SGR sequence content (without \e[ and m). $3: string to wrap + reset.
 sgr_if_tty() {

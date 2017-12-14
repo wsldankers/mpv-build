@@ -1,8 +1,15 @@
 #!/bin/sh
 export LC_ALL=C
 cd "$(dirname "$0")"
-. scripts/core-config
-id_in mpv "$config_projects" || err_msg_die "'mpv' is missing at config_projects"
+config_process_projects_cli=yes
+. scripts/core-config || exit 1
+
+# Installing only the last item of $config_projects . See note at ./install
+# Path arguments must be absolute. See note at ./install
 
 set -e
-scripts/mpv-uninstall
+proj=$(last_arg $config_projects)  # core-config ensured we have at least one
+
+highlight_msg "Uninstalling $proj"
+scripts/${proj}-uninstall "$@" || err_msg_die "failed to uninstall $proj"
+success_msg "uninstalled: $proj"
