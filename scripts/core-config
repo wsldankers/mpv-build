@@ -84,9 +84,9 @@ has_args() {
 }
 
 # $1: hook value (empty for no-op) [,$2 ... : additional arguments to pass]
-# Just execute in a subshell so it cannot affect the host even if function.
+# If non-empty, just execute and die on failure.
 hook_or_die() {
-    [ -z "$1" ] || ("$@") || err_msg_die "hook failed: '$@'"
+    [ -z "$1" ] || "$@" || err_msg_die "hook failed: '$@'"
 }
 
 # $1: valid id, $2: space-separated valid IDs. returns true if $1 is in $2
