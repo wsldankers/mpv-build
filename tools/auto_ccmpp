@@ -1,0 +1,46 @@
+#!/bin/sh
+# Use tools/ccmpp automatically with config_local_prefix and the provided
+# additional prefix[es] to de-prioritize.
+# - This script should be sourced, assumes pwd is the root dir.
+# - Make sure to read tools/ccmpp first.
+#
+# If used without arguments, tries to automate OS X with default setup of
+# macports or homebrew (but not both), or mingw{32|64} environment of msys2.
+#
+# E.g. To de-prioritize just /usr/local, use: ". ./tools/auto_ccmpp /usr/local"
+
+accm_err_die() { printf "Error: %s\n" "$1"; exit 1; }
+
+accm_main() {
+    local p0=; local p1=; local has_port=; local has_brew=; local win=
+    p0=$(./get-config -- config_local_prefix) || accm_err_die "cannot read config_local_prefix"
+    [ "${1:-}" = "--win" ] && win="--win" && shift
+
+    if [ $# -gt 0 ]; then
+        . ./tools/ccmpp $win $p0 "$@" || "failed to run 'tools/ccmpp $win $p0 $@"
+
+    elif [ "$(uname)" = "Darwin" ]; then
+        has_port="$(port version 2> /dev/null)"
+        has_brew="$(brew --version 2> /dev/null)"
+
+        [ "$has_port" ] || [ "$has_brew" ] ||
+            accm_err_die "neither macports nor brew detected"
+        [ "$has_port" ] && [ "$has_brew" ] &&
+            accm_err_die "cannot automate with both macports and homebrew present"
+
+        [ "$has_port" ] && p1=/opt/local || p1=/usr/local
+        [ -d $p1/include ] || accm_err_die "non-default macport/homebrew prefix"
+        . ./tools/ccmpp $p0 $p1 || accm_err_die "failed to run 'tools/ccmpp $p0 $p1"
+
+    elif [ "${MSYSTEM:-}" ] && [ "${MINGW_PREFIX:-}" ]; then
+        # Windows shenanigans: use both the normal path /mingw... and windows path c:/msys...
+        p1="$MINGW_PREFIX $(cd $MINGW_PREFIX && pwd -W)" || accm_err_die "cannot detect win-path"
+        . ./tools/ccmpp --win $p0 $p1 || accm_err_die "failed to run 'tools/ccmpp --win $p0 $p1"
+
+    else
+        accm_err_die "cannot automate this setup. Use tools/ccmpp manually"
+    fi
+}
+
+accm_main
+

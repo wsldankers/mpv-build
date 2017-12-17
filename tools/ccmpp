@@ -1,0 +1,77 @@
+#!/bin/sh
+# ccmpp: set Compiler Multi-Prefix Priorities.
+# This is a hack - you're on your own. But it can be useful.
+#
+# The problem: making sure a specific prefix has precedence while compiling.
+#
+# pkg-config generally strips system include and library paths when it reports
+# the data on a package, therefore if there are both "preferred" prefix and
+# a normal global default one, then the -I at the compile commands will not
+# include global ones, and same for -L at the link command - and the compiler
+# will fallback to it and find it without requiring explicit -I or -L .
+#
+# So if a package is installed both globally and in a "preferred prefix", then
+# the preferred prefix -I/-L will be used while compiling/linking and so the
+# preferred one indeed has precedence - and the global one is only a fallback.
+#
+# However, if there are other non-default prefixes which contain more than one
+# package, e.g. /usr/local (linux, homebrew) or /opt/local (macports) etc, then
+# it's possible that there will be -I/-L for both this non default prefix and
+# also our preferred prefix. If the same package is not installed on both then
+# there's no problem, but if it is, then the build system has no way to know
+# which has "higher priority" and therefore may use incorrect -I/-L order which
+# can result in using the "incorrect" package, or worse - inconsistent results.
+#
+# This script:
+#
+# This script tries to make sure that if there's more than one non-default
+# prefix, the compile/link commands will have correct -I and -L order as we
+# prefer.
+#
+# It does so by telling pkg-config via env vars that all those prefixes should
+# actually be considered system, so pkg-config doesn't report them and the
+# build system will not use them while constructing the build commands.
+#
+# But we do want to use them or else compilation would fail, so we use build
+# flags CFLAGS, CXXFLAGS and LDFLAGS to have them in the correct order, and
+# hopefully the build system takes them into account.
+#
+# Usage: . ccmpp [--win] prefix1 prefix2 ...
+# Source this script -> exports CFLAGS, CXXFLAGS, LDFLAGS and pkg-config vars.
+# prefix1 has the highest priority, then prefix2 [,prefix3 ...].
+# --win: use ';' for path separator, else uses ':'.
+# NOTE: white spaces in paths are not supported.
+
+# $1: string. $2: string. $3 separator to use if both $1 abd $2 are non-empty.
+ccm_append() {
+    [ "$1" ] && [ "$2" ] && printf %s "$1$3$2" || printf %s "$1$2"
+}
+
+ccm_main() {
+    local p=
+    local syslibs=
+    local sysincs=
+    local ldflags=
+    local incflags=
+    local pathsep=":"
+    [ "${1:-}" = "--win" ] && pathsep=";" && shift
+
+    for p in "$@"; do
+        syslibs="$(ccm_append "$syslibs" $p/lib $pathsep)"
+        sysincs="$(ccm_append "$sysincs" $p/include $pathsep)"
+        ldflags="$(ccm_append "$ldflags" -L$p/lib  " ")"
+        incflags="$(ccm_append "$incflags" -I$p/include " ")"
+    done
+
+    syslibs="$(ccm_append "$syslibs" "${PKG_CONFIG_SYSTEM_LIBRARY_PATH:-}" $pathsep)"
+    sysincs="$(ccm_append "$sysincs" "${PKG_CONFIG_SYSTEM_INCLUDE_PATH:-}" $pathsep)"
+    export PKG_CONFIG_SYSTEM_LIBRARY_PATH="$syslibs"
+    export PKG_CONFIG_SYSTEM_INCLUDE_PATH="$sysincs"
+
+    export LDFLAGS="$(ccm_append "$ldflags" "${LDFLAGS:-}"  " ")"
+    export CFLAGS="$(ccm_append "$incflags" "${CFLAGS:-}" " ")"
+    export CXXFLAGS="$(ccm_append "$incflags" "${CXXFLAGS:-}" " ")"
+}
+
+ccm_main "$@"
+
