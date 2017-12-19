@@ -45,14 +45,16 @@ update_source_or_die() { (
 hook_or_die "$config_update_pre" update-pre
 
 for p in $config_projects; do
+    update="$(var_val config_${p}_update)"
+    highlight_msg "($config_projects) updating $p/$update"
+    [ none = "$update" ] && continue
+
     url="$(var_val config_${p}_git)"
     dir="$(var_val config_${p}_source)"
-    update="$(var_val config_${p}_update)"
     rel_prfx="$(var_val config_${p}_release_prefix)"
 
-    highlight_msg "($config_projects) updating $p/$update"
     [ -e "$dir" ] || git clone "$url" "$dir" || err_msg_die "cannot clone '$url' to '$dir'"
-    [ "$update" = "none" ] || update_source_or_die "$dir" "$update" "$rel_prfx"
+    update_source_or_die "$dir" "$update" "$rel_prfx"
 
     hook_or_die "$(var_val config_${p}_update_post)" ${p}-update-post
 done
