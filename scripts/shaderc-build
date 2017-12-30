@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+cd "$config_shaderc_source"/build
+ninja install "$@"
+
+# no .pc file for shaderc, and it has different libs for static/shared. create
+# shaderc.pc to exposes the static ones, and adds -lstdc++ at Libs: such that
+# mpv can link with it without adding special static handling at wscript.
+pcfile="$config_local_prefix"/lib/pkgconfig/shaderc.pc
+cat <<- PCFILE > "$pcfile"
+	prefix=$config_local_prefix
+	libdir=\${prefix}/lib
+	includedir=\${prefix}/include
+
+	Name: libshaderc
+	Description: static libshaderc in mpv-build
+	Version: 0.1
+	Libs: -L\${libdir} -lshaderc_combined -lstdc++
+	Libs.private:
+	Cflags: -I\${includedir}
+PCFILE

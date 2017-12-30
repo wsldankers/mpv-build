@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+# $1: git URL, $2: source dir
+clone_or_pull() (
+    set -x
+    if [ -d "$2" ]; then
+        cd "$2"
+        git pull -r
+    else
+        git clone --depth=1 "$1" "$2"
+    fi
+)
+
+cd "$config_shaderc_source"
+clone_or_pull https://github.com/google/glslang.git third_party/glslang
+clone_or_pull https://github.com/KhronosGroup/SPIRV-Tools.git third_party/spirv-tools
+clone_or_pull https://github.com/KhronosGroup/SPIRV-Headers.git third_party/spirv-headers

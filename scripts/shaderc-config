@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+cd "$config_shaderc_source"
+[ -d build ] || mkdir build
+cd build
+
+cmake -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DSHADERC_SKIP_TESTS=ON \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DCMAKE_INSTALL_LIBDIR="$config_local_prefix"/lib \
+      -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
+      "$@" \
+      ..

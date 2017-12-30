@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+[ -d "$config_shaderc_source" ] || exit 0
+
+cd "$config_shaderc_source"
+if [ -d build ]; then
+    rm -rf ./build
+fi
