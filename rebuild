@@ -3,6 +3,6 @@ set -e
 export LC_ALL=C
 cd "$(dirname "$0")"
 
-./clean "$@"
+./clean --keep-prefix=no "$@"
 ./update "$@"
 ./build "$@"

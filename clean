@@ -1,5 +1,13 @@
 #!/bin/sh
 export LC_ALL=C
+
+# respect --keep-prefix[=..] 1st arg, else delete prefix only if zero arguments.
+keep_prefix=yes
+[ $# = 0 ] && keep_prefix=no
+[ "${1-}" = "--keep-prefix=no" ] && keep_prefix=no && shift
+[ "${1-}" = "--keep-prefix=yes" ] && keep_prefix=yes && shift
+[ "${1-}" = "--keep-prefix" ] && keep_prefix=yes && shift
+
 cd "$(dirname "$0")"
 config_process_projects_cli=yes
 . scripts/core-config || exit 1
@@ -10,7 +18,10 @@ for p in $config_projects; do
     highlight_msg "($config_projects) cleaning $p"
     scripts/${p}-clean || err_msg_die "failed to clean '$p'"
 done
-rm -rf "$config_local_prefix"
+
+if [ no = "$keep_prefix" ]; then
+    rm -rf "$config_local_prefix"
+fi
 
 hook_or_die "$config_clean_post" clean-post
 success_msg "cleaned: $config_projects"
