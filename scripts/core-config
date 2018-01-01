@@ -59,6 +59,11 @@ err_msg_die() {
     exit 1
 }
 
+# $1: string to print
+warn_msg() {
+    >&2 printf "%s\n" "$(sgr_if_tty "$err_tty" 33 "${msg_prefix}Warning: $1")"
+}
+
 # succeeds if "$1" is non empty and consists of only [0-9a-zA-Z_] chars
 # we allow to start with a number because project names don't start an id.
 is_valid_id() {
