@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+
+cd "$config_mujs_source"
+
+make prefix="$config_local_prefix" install  "$@"
