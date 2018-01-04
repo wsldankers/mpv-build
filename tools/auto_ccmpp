@@ -1,46 +1,67 @@
 #!/bin/sh
-# Use tools/ccmpp automatically with config_local_prefix and the provided
+# Use ./tools/ccmpp automatically with config_local_prefix and the provided
 # additional prefix[es] to de-prioritize.
-# - This script should be sourced, assumes pwd is the root dir.
+# - eval the output of this script to export the vars. assumes pwd is build root
 # - Make sure to read tools/ccmpp first.
 #
-# If used without arguments, tries to automate OS X with default setup of
-# macports or homebrew (but not both), or mingw{32|64} environment of msys2.
+# Usage: auto_ccmpp [ccmpp-options] [--] [prefix1 [prefix2 ...]]
+# E.g. to deprioritize just /usr/opt : eval "$(./tools/auto_ccmpp /usr/opt)"
 #
-# E.g. To de-prioritize just /usr/local, use: ". ./tools/auto_ccmpp /usr/local"
+# If invoked without prefixes, tries to automate OS X with default setup of
+# macports or homebrew (but not both), or mingw{32|64} environment of msys2,
+# or, if not msys2+mingw and not OS X, depriotitize /usr/local .
 
 accm_err_die() { printf "Error: %s\n" "$1"; exit 1; }
 
 accm_main() {
-    local p0=; local p1=; local has_port=; local has_brew=; local win=
-    p0=$(./get-config -- config_local_prefix) || accm_err_die "cannot read config_local_prefix"
-    [ "${1:-}" = "--win" ] && win="--win" && shift
+    local p0=; local p1=; local port=; local brew=; local opts=; local out=
+    p0="$(./get-config -- config_local_prefix)" ||
+        accm_err_die "cannot read config_local_prefix"
+
+    # pass all leading -* args [up to '--'] directly to ccmpp
+    while [ $# -gt 0 ] && [ "${1#-}" != "$1" ]; do
+        [ "$1" = -- ] && shift && break
+        case "$1" in --help|-h) >&2 echo "You're on your own"; return 1; esac
+        opts="$opts $1" && shift  # no spaces in supported options, used unquoted
+    done
 
     if [ $# -gt 0 ]; then
-        . ./tools/ccmpp $win $p0 "$@" || "failed to run 'tools/ccmpp $win $p0 $@"
+        set -- $opts -- "$p0" "$@"
 
     elif [ "$(uname)" = "Darwin" ]; then
-        has_port="$(port version 2> /dev/null)"
-        has_brew="$(brew --version 2> /dev/null)"
+        port="$(port version 2> /dev/null)"
+        brew="$(brew --version 2> /dev/null)"
 
-        [ "$has_port" ] || [ "$has_brew" ] ||
+        [ "$port" ] || [ "$brew" ] ||
             accm_err_die "neither macports nor brew detected"
-        [ "$has_port" ] && [ "$has_brew" ] &&
-            accm_err_die "cannot automate with both macports and homebrew present"
+        [ "$port" ] && [ "$brew" ] &&
+            accm_err_die "can't automate - both macports and homebrew present"
 
-        [ "$has_port" ] && p1=/opt/local || p1=/usr/local
+        [ "$port" ] && p1=/opt/local || p1=/usr/local
         [ -d $p1/include ] || accm_err_die "non-default macport/homebrew prefix"
-        . ./tools/ccmpp $p0 $p1 || accm_err_die "failed to run 'tools/ccmpp $p0 $p1"
 
-    elif [ "${MSYSTEM:-}" ] && [ "${MINGW_PREFIX:-}" ]; then
-        # Windows shenanigans: use both the normal path /mingw... and windows path c:/msys...
-        p1="$MINGW_PREFIX $(cd $MINGW_PREFIX && pwd -W)" || accm_err_die "cannot detect win-path"
-        . ./tools/ccmpp --win $p0 $p1 || accm_err_die "failed to run 'tools/ccmpp --win $p0 $p1"
+        set -- $opts -- "$p0" $p1
+
+    elif [ "${MSYSTEM-}" ] && [ "${MINGW_PREFIX-}" ]; then
+        # pkg-config on windows is without built-in default prefix[es] to filter
+        p1="$MINGW_PREFIX"
+        # p1 is /mingw{32|64} , but it's also used as X:/msys2/mingw{32|64}
+        # `pwd -W` is the full "native" path format as X:/foo/bar
+        local p0win="$(cd "$p0" && pwd -W)"  # $config_local_prefix should exist
+        local p1win="$(cd "$p1" && pwd -W)"
+        [ "$p0win" ] && [ "$p1win" ] || accm_err_die "cannot find win paths"
+
+        # Windows shenanigans: expose the native style and ask pkg-config to
+        # filter out the rest as system paths, specifically both versions of the
+        # built-in mingw prefix, and the *nix style of our config_local_prefix
+        set -- --win $opts -- "$p0win" ^ "$p0" "$p1" "$p1win"
 
     else
-        accm_err_die "cannot automate this setup. Use tools/ccmpp manually"
+        set -- $opts -- "$p0" /usr/local
     fi
+
+    out="$(./tools/ccmpp "$@")" || accm_err_die "failed: ./tools/ccmpp $*"
+    printf "%s\n" "$out"
 }
 
-accm_main
-
+accm_main "$@"

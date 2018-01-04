@@ -1,5 +1,5 @@
 #!/bin/sh
-# ccmpp: set Compiler Multi-Prefix Priorities.
+# ccmpp: Control Compiler Multi-Prefix Priorities.
 # This is a hack - you're on your own. But it can be useful.
 #
 # The problem: making sure a specific prefix has precedence while compiling.
@@ -19,59 +19,128 @@
 # it's possible that there will be -I/-L for both this non default prefix and
 # also our preferred prefix. If the same package is not installed on both then
 # there's no problem, but if it is, then the build system has no way to know
-# which has "higher priority" and therefore may use incorrect -I/-L order which
-# can result in using the "incorrect" package, or worse - inconsistent results.
+# which has "higher priority" and therefore may use "incorrect" -I/-L order,
+# which can end up using the "incorrect" package or even inconsistent results.
 #
 # This script:
 #
 # This script tries to make sure that if there's more than one non-default
-# prefix, the compile/link commands will have correct -I and -L order as we
+# prefix, the compile/link commands will have "correct" -I and -L order - as we
 # prefer.
 #
-# It does so by telling pkg-config via env vars that all those prefixes should
-# actually be considered system, so pkg-config doesn't report them and the
-# build system will not use them while constructing the build commands.
+# It does so by telling pkg-config via env vars that all those non-default
+# prefixes should actually be considered system prefixes, so pkg-config doesn't
+# report them and the build system will hopefully not use them while
+# constructing the build commands.
 #
-# But we do want to use them or else compilation would fail, so we use build
-# flags CFLAGS, CXXFLAGS and LDFLAGS to have them in the correct order, and
-# hopefully the build system takes them into account.
+# But we do want to use them or else compilation would fail, so we use the
+# build flags CFLAGS, CXXFLAGS and LDFLAGS to have them in the correct order,
+# and hopefully the build system takes them into account.
 #
-# Usage: . ccmpp [--win] prefix1 prefix2 ...
-# Source this script -> exports CFLAGS, CXXFLAGS, LDFLAGS and pkg-config vars.
-# prefix1 has the highest priority, then prefix2 [,prefix3 ...].
-# --win: use ';' for path separator, else uses ':'.
-# NOTE: white spaces in paths are not supported.
+# Usage: see below.
 
-# $1: string. $2: string. $3 separator to use if both $1 abd $2 are non-empty.
+# [$1: Error message -> mini usage + use stderr]
+ccm_usage() {
+    local o=1
+    [ $# = 0 ] || { o=2; >&2 printf "%s\n" "Error: $1"; }
+    >&$o echo "Usage: ccmpp [-h] [-f] [--win[=no]] [--] prefix1[#libdir1] [prefix2[#..] ...]"
+    >&$o echo "Control Compiler Multi-Prefix Priorities: prefix1 is highest, then prefix2 ..."
+    [ $# = 0 ] || return
+    echo "Print shell export commands of LDFLAGS, CFLAGS, CXXFLAGS and pkg-config system"
+    echo "libs/includes vars to enforce prefix priorities for -I/-L compile/link flags."
+    echo "Requires pkg-config 0.29.2 or later to interpret the pkg-config env vars."
+    echo
+    echo "eval the output to export the vars."
+    echo "    -h: print this help and exit."
+    echo "    -f: only do the flag vars (LDFLAGS, CFLAGS, CXXFLAGS)."
+    echo " --win: use ';' as path separator, else use the default ':' ."
+    echo "libdir: e.g. lib64 for this prefix. Note: '#' is always interpreted as libdir."
+    echo "If a prefix arg is '@', the original value is inserted in its place (for each"
+    echo "env variable respectively), else it's inserted before prefix1 ."
+    echo "If a prefix args is '^', -I and -L will not be added beyond (default prefixs)."
+}
+
+# $1 string, $2: char to escape. This is not a generic function. It expects $2
+# as only space/semicolon/colon (though may work with others), and prefixes $2
+# and backslash with backslash.
+ccm_esc() {
+    printf %s "$1" | sed 's/['"$2"'\]/\\&/g'  # \ -> \\ , <$2> -> \<$2>
+}
+
+# $1 string to quote as shell value, assuming it's inside single-quotes.
+# E.g. to allow this for any $y: eval "$(printf %s "x='$(ccm_quote "$y")')"
+ccm_quote() {
+    printf %s "$1" | sed "s/[']/'\\\''/g"  # ' -> '\''
+}
+
+# $1: string. $2: string. $3 separator char to use if $1 and $2 are non-empty.
+# [$4: non-empty to avoid escaping $2, else <sep> -> \<sep> and \ -> \\ ]
+#
+# Note: escaping is ugly, and may be interpreted differently because $reasons,
+# so best stick to paths which don't need it. This means paths without spaces
+# (everywhere), paths without back-slashes (everywhere, on windows it would
+# be C:/foo/bar), paths without colons on *nix and without semicolons on
+# windows (preferably both), and paths without other weird chars (everywhere).
+#
+# Nevertheless, we do our best to escape those reasonably, only where required.
+# E.g. colon needs escaping at colon-separated pkg-config vars, but not for
+# windows (uses semicolon separation), and not at CFLAGS (space separation).
+# However, we don't handle newlines in paths as there's no concensus how to esc
+# it, e.g. gcc supports it with trigraphs at CFLAGS, but disabled by default.
 ccm_append() {
+    [ "${4-}" ] || [ -z "$2" ] || set -- "$1" "$(ccm_esc "$2" "$3")" "$3"
     [ "$1" ] && [ "$2" ] && printf %s "$1$3$2" || printf %s "$1$2"
 }
 
-ccm_main() {
-    local p=
-    local syslibs=
-    local sysincs=
-    local ldflags=
-    local incflags=
-    local pathsep=":"
-    [ "${1:-}" = "--win" ] && pathsep=";" && shift
+ccm_append_orig() {
+    syslibs="$(ccm_append  "$syslibs"  "${PKG_CONFIG_SYSTEM_LIBRARY_PATH-}" $pathsep noesc)"
+    sysincs="$(ccm_append  "$sysincs"  "${PKG_CONFIG_SYSTEM_INCLUDE_PATH-}" $pathsep noesc)"
+    ldflags="$(ccm_append  "$ldflags"  "${LDFLAGS-}" " " noesc)"
+    cflags="$(ccm_append   "$cflags"   "${CFLAGS-}" " " noesc)"
+    cxxflags="$(ccm_append "$cxxflags" "${CXXFLAGS-}" " " noesc)"
+}
 
-    for p in "$@"; do
-        syslibs="$(ccm_append "$syslibs" $p/lib $pathsep)"
-        sysincs="$(ccm_append "$sysincs" $p/include $pathsep)"
-        ldflags="$(ccm_append "$ldflags" -L$p/lib  " ")"
-        incflags="$(ccm_append "$incflags" -I$p/include " ")"
+ccm_main() {
+    local syslibs=; local sysincs=; local ldflags=; local cflags=; local cxxflags=
+    local p=; local v=; local f=; local libdir=; local commands=; local has_orig_pos_arg=
+    local defp=; pathsep=":"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+                       --) shift; break;;
+                --help|-h) ccm_usage; return;;
+          --win|--win=yes) pathsep=";";;
+                 --win=no) pathsep=":";;
+                       -f) f=yes;;
+                       -*) ccm_usage "unknown option $1"; return 1;;
+                        *) break;;
+        esac
+        shift
     done
 
-    syslibs="$(ccm_append "$syslibs" "${PKG_CONFIG_SYSTEM_LIBRARY_PATH:-}" $pathsep)"
-    sysincs="$(ccm_append "$sysincs" "${PKG_CONFIG_SYSTEM_INCLUDE_PATH:-}" $pathsep)"
-    export PKG_CONFIG_SYSTEM_LIBRARY_PATH="$syslibs"
-    export PKG_CONFIG_SYSTEM_INCLUDE_PATH="$sysincs"
+    [ $# = 0 ] && { ccm_usage "missing prefix"; return 1; }
+    for p in "$@"; do [ "$p" = @ ] && has_orig_pos_arg=yes; done
+    [ "$has_orig_pos_arg" ] || set -- @ "$@"
 
-    export LDFLAGS="$(ccm_append "$ldflags" "${LDFLAGS:-}"  " ")"
-    export CFLAGS="$(ccm_append "$incflags" "${CFLAGS:-}" " ")"
-    export CXXFLAGS="$(ccm_append "$incflags" "${CXXFLAGS:-}" " ")"
+    for p in "$@"; do
+        [ "$p" = @ ] && ccm_append_orig && continue
+        [ "$p" = ^ ] && defp=yes && continue
+
+        libdir=lib
+        case "$p" in *#*) libdir="${p#*#}"; p="${p%#*}"; esac  # assume one '#'
+
+        syslibs="$(ccm_append "$syslibs" "$p/$libdir" $pathsep)"
+        sysincs="$(ccm_append "$sysincs" "$p/include" $pathsep)"
+        [ "$defp" ] || ldflags="$(ccm_append  "$ldflags"  "-L$p/$libdir"  " ")"
+        [ "$defp" ] || cflags="$(ccm_append   "$cflags"   "-I$p/include"  " ")"
+        [ "$defp" ] || cxxflags="$(ccm_append "$cxxflags" "-I$p/include"  " ")"
+    done
+
+    [ "$f" ] || printf "%s\n" "export PKG_CONFIG_SYSTEM_LIBRARY_PATH='$(ccm_quote "$syslibs")'"
+    [ "$f" ] || printf "%s\n" "export PKG_CONFIG_SYSTEM_INCLUDE_PATH='$(ccm_quote "$sysincs")'"
+    printf "%s\n" "export LDFLAGS='$(ccm_quote "$ldflags")'"
+    printf "%s\n" "export CFLAGS='$(ccm_quote "$cflags")'"
+    printf "%s\n" "export CXXFLAGS='$(ccm_quote "$cxxflags")'"
 }
 
 ccm_main "$@"
-
