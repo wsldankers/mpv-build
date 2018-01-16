@@ -39,6 +39,6 @@ esac
 
 echo Using ffmpeg options: $OPTIONS
 
-mkdir -p "$BUILD"/ffmpeg_build
-cd "$BUILD"/ffmpeg_build
+mkdir -p "$config_local_prefix"/tmp/ffmpeg_build
+cd "$config_local_prefix"/tmp/ffmpeg_build
 "$config_ffmpeg_source"/configure --prefix="$config_local_prefix" --enable-static --disable-shared $OPTIONS
