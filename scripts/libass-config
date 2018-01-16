@@ -8,15 +8,6 @@ if "$BUILD"/scripts/test-libmpv ; then
     OPTIONS="$OPTIONS --with-pic"
 fi
 
-case "$PKG_CONFIG_PATH" in
-  '')
-    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig"
-    ;;
-  *)
-    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
-    ;;
-esac
-
 cd "$config_libass_source"
 # Later libass doesn't automatically run configure with autogen.sh anymore
 ./autogen.sh --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared $OPTIONS

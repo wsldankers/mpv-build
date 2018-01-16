@@ -28,15 +28,6 @@ then
     fi
 fi
 
-case "$PKG_CONFIG_PATH" in
-  '')
-    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig"
-    ;;
-  *)
-    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
-    ;;
-esac
-
 echo Using ffmpeg options: $OPTIONS
 
 mkdir -p "$config_local_prefix"/tmp/ffmpeg_build

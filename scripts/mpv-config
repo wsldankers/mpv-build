@@ -9,15 +9,6 @@ if test -f "$BUILD"/mpv_options ; then
 fi
 OPTIONS="$USER_OPTS"
 
-case "$PKG_CONFIG_PATH" in
-  '')
-    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig"
-    ;;
-  *)
-    export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
-    ;;
-esac
-
 echo Using mpv options: $OPTIONS
 
 cd "$config_mpv_source"
