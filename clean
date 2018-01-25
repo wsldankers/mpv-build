@@ -23,8 +23,15 @@ done
 
 if [ no = "$keep_prefix" ]; then
     highlight_msg "($config_projects) deleting local prefix dir"
-    rm -rf "$config_local_prefix" ||
-        { warn_msg "failed to delete '$config_local_prefix'"; fail=yes; }
+    # the prefix dir exists - ensured at scripts/core-config earlier
+    if ! [ -e "$config_local_prefix"/core-prefix ]; then
+        warn_msg "$config_local_prefix is not a dir we created, not deleting"
+        info_msg "to allow deletion, run 'touch $config_local_prefix/core-prefix'"
+        fail=yes
+    else
+        rm -rf "$config_local_prefix" ||
+            { warn_msg "failed to delete '$config_local_prefix'"; fail=yes; }
+    fi
 fi
 
 hook_or_die "$config_clean_post" clean-post

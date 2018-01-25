@@ -44,6 +44,11 @@ sgr_if_tty() {
 [ -t 2 ] && err_tty=yes || err_tty=
 
 # $1: string to print
+info_msg() {
+    printf "%s\n" "${msg_prefix}$1"
+}
+
+# $1: string to print
 highlight_msg() {
     printf "%s\n" "$(sgr_if_tty "$out_tty" 36 "${msg_prefix}$1")"
 }
@@ -118,11 +123,12 @@ finalize_config_export_or_die() {
     done
     export config_projects
 
-    # Cannot be overridden by user.conf - read its value from config/default.conf
-    config_local_prefix=
-    config_local_prefix="$(. config/default.conf && printf %s "$config_local_prefix")"
     [ "$config_local_prefix" ] || err_msg_die "missing \$config_local_prefix"
-    mkdir -p "$config_local_prefix" || err_msg_die "cannot create dir '$config_local_prefix'"
+    if ! [ -e "$config_local_prefix" ]; then
+        # create a "core-prefix" file at the prefix to know it's ours on clean
+        mkdir -p "$config_local_prefix" && touch "$config_local_prefix"/core-prefix \
+            || err_msg_die "cannot create dir '$config_local_prefix'"
+    fi
     var_to_real_dir_or_die config_local_prefix
     export config_local_prefix
 }
