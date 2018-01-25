@@ -91,19 +91,22 @@ update_source_or_die() { (
     ref=
     update="$1"
     depth=
-    # if update starts with '-' (shallow) -> strip it + set $depth
-    case "$update" in -*)
-        update="${update#-}"
-        # determines how many commits can happen upstream before shallow
-        # fetch begins from scratch. 100 is an arbitrary balance.
-        depth="--depth=100"
+    [ yes = "$config_git_shallow" ] && depth="--depth=$config_git_shallow_depth"
+    # if update starts with '-' or '+' strip it and set $depth accordingly
+    case "$update" in
+        -*) update="${update#-}"
+            depth="--depth=$config_git_shallow_depth"
+            ;;
+        +*) update="${update#+}"
+            depth=
+            ;;
     esac
 
     set -x
     ensure_repo "$2" "$3" "$depth" &&
     cd "$3" &&
     case "$update" in
-            @*) git checkout "${update#@}";;
+            @*) git fetch $depth && git checkout "${update#@}";;
         rebase) git pull $depth --rebase;;
           head) fetch_checkout HEAD $depth;;
 
