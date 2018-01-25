@@ -81,7 +81,7 @@ fetch_checkout() (
         refs/pull/*)  c="refs/remotes/origin/${f#refs/}"       && f="$f:$c";;
         HEAD)         c="refs/remotes/origin/HEAD"             && f="$f:$c";;
     esac
-    git fetch "$@" origin "$f" && git checkout "$c"^0
+    git fetch --force "$@" origin "$f" && git checkout "$c"^0
 )
 
 # $1: update value, $2: repo URL, $3: repo dir, $4: release prefix
