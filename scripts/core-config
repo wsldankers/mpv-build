@@ -27,11 +27,6 @@ has_var() {
     is_valid_id "$1" && (eval [ \"\${$1+set}\" ]) 2> /dev/null
 }
 
-# args: any. prints the last argument. error (without dieing) if no args.
-last_arg() {
-    [ $# -gt 0 ] && eval printf %s \"\$$#\" || false
-}
-
 # $1: non empty if printing to a tty, empty for plain passthrough.
 # $2: SGR sequence content (without \e[ and m). $3: string to wrap + reset.
 sgr_if_tty() {
@@ -110,12 +105,12 @@ id_in() {
 
 # args: none. checks that project names exist, have valid names, and their
 # source dirs are known. Creates the $config_local_prefix dir and export its
-# full path. export globals + source-dirs of active-project. existing dirs
-# ensured to be exported as full paths. msg and die on errors.
+# full path. export globals + source-dirs of active-projects and main project.
+# existing dirs ensured to be exported as full paths. msg and die on errors.
 finalize_config_export_or_die() {
     local p=
     [ "${config_projects:-}" ] || err_msg_die "no projects to process"
-    for p in $config_projects; do
+    for p in $config_projects $config_main; do
         validate_id_or_die "$p"
         [ "$(var_val config_${p}_source)" ] || err_msg_die "unknown source-dir for '$p'"
         [ -d "$(var_val config_${p}_source)" ] && var_to_real_dir_or_die config_${p}_source
@@ -131,6 +126,7 @@ finalize_config_export_or_die() {
     fi
     var_to_real_dir_or_die config_local_prefix
     export config_local_prefix
+    export config_main
 }
 
 # project arguments are all the arguments before the first argument which
@@ -166,7 +162,9 @@ apply_project_args() {
 . config/default.conf
 [ -f ./user.conf ] && . ./user.conf
 
-[ "${config_title:-}" ] && msg_prefix="[$config_title] " || msg_prefix=
+msg_prefix="[${config_main}-build] "
+[ "$config_projects" ] && config_projects="$config_projects "
+config_projects="$config_projects$config_main"
 
 # The CLI arguments are always [<projects-args>] [[--] <other-arguments>]
 # we apply the project-args ones to the config and then eat them [and '--'].

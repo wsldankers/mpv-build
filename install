@@ -4,19 +4,13 @@ cd "$(dirname "$0")"
 config_process_projects_cli=yes
 . scripts/core-config || exit 1
 
-# We install only the last project of $config_projects, as it's the main output
-# of this setup, which typically links statically with the local deps libs.
-# Technically, the user can override the projects list via CLI and hence the
-# install script to execute, however, it's not guaranteed that an install
-# script exists for projects other than the main one.
-
 # NOTE: path arguments must be absolute (unless you know what you're doing).
 # This is because $(pwd) while the arguments are applied depends on the install
 # script, and can change if the install script changes. Some install scripts
 # cd to the source dir, others to a build dir, etc.
 
 set -e
-proj=$(last_arg $config_projects)  # core-config ensured we have at least one
+proj=$config_main
 
 highlight_msg "Installing $proj"
 scripts/${proj}-install "$@" || err_msg_die "failed to install $proj"
