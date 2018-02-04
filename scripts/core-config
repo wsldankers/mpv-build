@@ -163,8 +163,6 @@ apply_project_args() {
 [ -f ./user.conf ] && . ./user.conf
 
 msg_prefix="[${config_main}-build] "
-[ "$config_projects" ] && config_projects="$config_projects "
-config_projects="$config_projects$config_main"
 
 # The CLI arguments are always [<projects-args>] [[--] <other-arguments>]
 # we apply the project-args ones to the config and then eat them [and '--'].
