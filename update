@@ -91,6 +91,16 @@ fetch_checkout() (
     git fetch --force "$@" $remote "$f" && git checkout "$c"^0
 )
 
+# succeeds if $1 dir is a shallow git repo
+is_shallow() (
+    cd "$1" &&
+    case "$(git rev-parse --is-shallow-repository)" in
+         true) true;;
+        false) false;;
+            *) gdir="$(git rev-parse --git-dir)" && [ -e "$gdir"/shallow ]
+    esac
+)
+
 # $1: update value, $2: repo URL, $3: repo dir, $4: release prefix
 update_source_or_die() { (
     set +x
@@ -108,6 +118,9 @@ update_source_or_die() { (
             depth=
             ;;
     esac
+
+    # if the dir exists and isn't a shalow repo - don't use --depth=...
+    { ! [ -e "$3" ]; } || is_shallow "$3" || depth=
 
     set -x
     ensure_repo "$2" "$3" "$depth" &&
