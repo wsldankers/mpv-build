@@ -12,6 +12,9 @@ cd "$(dirname "$0")"
 config_process_projects_cli=yes
 . scripts/core-config || exit 1
 
+# the remote name we set and use - we don't touch "origin" or "upstream" etc.
+remote=$config_main-build-remote
+
 # $1: tag prefix
 versort_with_prefix() {
     # Emulate sort -V using a known prefix. Filter out anything else.
@@ -24,7 +27,7 @@ versort_with_prefix() {
 
 remote_tags() {
     # tags ending with ^{} are refs to other tags with the same name sans ^{}
-    git ls-remote --tags | cut -f2 | grep -v '\^{}$' | sed "s/^refs\/tags\///g"
+    git ls-remote --tags $remote | cut -f2 | grep -v '\^{}$' | sed "s/^refs\/tags\///g"
 }
 
 # $1: tag prefix
@@ -38,17 +41,21 @@ highest_release_tag_ref() {
 ensure_repo() { (
     if [ -e "$2" ]; then
         cd "$2" &&
-        git remote set-url origin "$1"
+        { git config remote.$remote.url > /dev/null || git remote add $remote "$1"; } &&
+        git remote set-url $remote "$1"
     else
         if [ -z "${3-}" ]; then
             # not shallow -> plain clone
-            git clone "$1" "$2"
+            git clone "$1" "$2" &&
+            cd "$2" &&
+            git remote add $remote "$1"
         else
             # shallow -> init the repo without fetching anything
             mkdir -p "$2" &&
             cd "$2" &&
             git init &&
-            git remote add origin "$1"
+            git remote add origin "$1" &&
+            git remote add $remote "$1"
         fi
     fi
 ) || err_msg_die "cannot setup git repo '$2' at '$3'"; }
@@ -56,7 +63,7 @@ ensure_repo() { (
 # resolve a full remote ref from [fuzzy] $1, or fail
 remote_ref() (
     set +x
-    refs="$(git ls-remote | cut -f2 | grep -v '\^{}$')" || exit 1
+    refs="$(git ls-remote $remote | cut -f2 | grep -v '\^{}$')" || exit 1
 
     # we only know to handle HEAD or refs/*
     [ HEAD = "$1" ] && printf HEAD ||
@@ -77,11 +84,11 @@ fetch_checkout() (
     case "$f" in
         # create local reference using remote-ref:local-ref syntax.
         refs/tags/*)  c="$f"                                   && f="$f:$c";;
-        refs/heads/*) c="refs/remotes/origin/${f#refs/heads/}" && f="$f:$c";;
-        refs/pull/*)  c="refs/remotes/origin/${f#refs/}"       && f="$f:$c";;
-        HEAD)         c="refs/remotes/origin/HEAD"             && f="$f:$c";;
+        refs/heads/*) c="refs/remotes/$remote/${f#refs/heads/}" && f="$f:$c";;
+        refs/pull/*)  c="refs/remotes/$remote/${f#refs/}"       && f="$f:$c";;
+        HEAD)         c="refs/remotes/$remote/HEAD"             && f="$f:$c";;
     esac
-    git fetch --force "$@" origin "$f" && git checkout "$c"^0
+    git fetch --force "$@" $remote "$f" && git checkout "$c"^0
 )
 
 # $1: update value, $2: repo URL, $3: repo dir, $4: release prefix
