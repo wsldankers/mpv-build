@@ -20,3 +20,6 @@ cat <<- PCFILE > "$pcfile"
 	Libs.private:
 	Cflags: -I\${includedir}
 PCFILE
+
+# remove the shared lib such that mpv doesn't find it if not using the .pc file.
+rm "$config_local_prefix"/lib/libshaderc_shared*
