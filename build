@@ -1,11 +1,14 @@
 #!/bin/sh
 export LC_ALL=C
 
-# we only support --mode=... as the first argument of ./build
+# we only support --mode=... (or -c/-b) as the first argument of ./build
 mode=
-[ $# -gt 0 ] && [ "$1" != "${1#--mode=}" ] && mode="${1#--mode=}" && shift
-[ "$mode" ] && [ "$mode" != build ] && [ "$mode" != config ] &&
-    >&2 echo "Error: valid modes: <empty> | config | build" && exit 1
+case "${1-}" in
+    --mode=config|-c) mode=config; shift;;
+     --mode=build|-b) mode=build; shift;;
+          --mode=all) mode=; shift;;
+            --mode=*) >&2 echo "Error: valid modes: all, config, build"; exit 1
+esac
 export build_mode="$mode"  # allow hooks to see this too
 
 cd "$(dirname "$0")"
