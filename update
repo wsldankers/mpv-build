@@ -70,7 +70,7 @@ remote_ref() (
     (printf %s "$refs" | grep "^refs/${1#refs/}\$") ||
     (printf %s "$refs" | grep "^refs/tags/$1\$") ||
     (printf %s "$refs" | grep "^refs/heads/$1\$") ||
-    (printf %s "$refs" | grep "^refs/pull/(${1#pull/}\|${1#PR}/head\$")  # pull/42, PR42, 42
+    (printf %s "$refs" | grep "^refs/pull/\(${1#PR}\|${1#\#}\)/head\$")  # PR42, #42, 42
 )
 
 # $1: remote ref, [$2 ... : earlier fetch args]
