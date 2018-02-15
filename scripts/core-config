@@ -112,6 +112,13 @@ finalize_config_export_or_die() {
     [ "${config_projects:-}" ] || err_msg_die "no projects to process"
     for p in $config_projects $config_main; do
         validate_id_or_die "$p"
+        # set missing configs to empty
+        eval :  \${config_${p}_source:=} \
+                \${config_${p}_update:=} \
+                \${config_${p}_git:=} \
+                \${config_${p}_release_prefix:=} \
+                \${config_${p}_update_post:=}
+
         [ "$(var_val config_${p}_source)" ] || err_msg_die "unknown source-dir for '$p'"
         [ -d "$(var_val config_${p}_source)" ] && var_to_real_dir_or_die config_${p}_source
         export config_${p}_source
