@@ -23,7 +23,8 @@ export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig${PKG_CONFIG_PATH-}"
 do_config_or_die() {
     local p=$1; shift
     if [ -e scripts/${p}-config ]; then
-        scripts/${p}-config "$@" || err_msg_die "failed to configure $p"
+        scripts/${p}-config $(var_val config_${p}_opts_config) "$@" ||
+            err_msg_die "failed to configure $p"
     else
         echo "No config (empty)"
     fi
@@ -32,7 +33,8 @@ do_config_or_die() {
 do_build_or_die() {
     local p=$1; shift
     if [ -e scripts/${p}-build ]; then
-        scripts/${p}-build "$@" || err_msg_die "failed to build $p"
+        scripts/${p}-build $(var_val config_${p}_opts_build) "$@" ||
+            err_msg_die "failed to build $p"
     else
         echo "No build (empty)"
     fi
@@ -46,6 +48,10 @@ do_build_or_die() {
 # mode=build is required too, or else if we previously used mode=config then
 # the following build will run configure again without args.
 for p in $config_projects; do
+    f=./${p}_options
+    if [ -e $f ]; then
+        warn_msg "ignoring $f - set config_${p}_opts_config at user.conf instead"
+    fi
     case "$build_mode" in
         config) highlight_msg "($config_projects) configure-only $p"
                 do_config_or_die $p "$@"

@@ -1,15 +1,7 @@
 #!/bin/sh
 set -e
 
-BUILD="$(pwd)"
-
-USER_OPTS="$@"
-if test -f "$BUILD"/mpv_options ; then
-    USER_OPTS="$(cat "$BUILD"/mpv_options) $USER_OPTS"
-fi
-OPTIONS="$USER_OPTS"
-
-echo Using mpv options: $OPTIONS
+echo Using mpv options: "$@"
 
 cd "$config_mpv_source"
-./waf configure $OPTIONS
+./waf configure "$@"

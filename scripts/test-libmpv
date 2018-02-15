@@ -4,12 +4,4 @@
 
 set -e
 
-BUILD="$(pwd)"
-
-USER_OPTS="$@"
-if test -f "$BUILD"/mpv_options ; then
-    if cat "$BUILD"/mpv_options | grep -e '--enable-libmpv' > /dev/null ; then
-        exit 0
-    fi
-fi
-exit 1
+printf %s "$config_mpv_opts_config" | grep -e '--enable-libmpv' > /dev/null

@@ -10,4 +10,4 @@ fi
 
 cd "$config_fribidi_source"
 ./bootstrap
-./configure --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared --without-glib $OPTIONS
+./configure --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared --without-glib $OPTIONS "$@"

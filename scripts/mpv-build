@@ -2,4 +2,4 @@
 set -e
 
 cd "$config_mpv_source"
-./waf build $@
+./waf build "$@"
