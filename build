@@ -20,6 +20,24 @@ hook_or_die "$config_build_pre" build-pre
 [ "${PKG_CONFIG_PATH-}" ] && PKG_CONFIG_PATH=":$PKG_CONFIG_PATH"
 export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig${PKG_CONFIG_PATH-}"
 
+do_config_or_die() {
+    local p=$1; shift
+    if [ -e scripts/${p}-config ]; then
+        scripts/${p}-config "$@" || err_msg_die "failed to configure $p"
+    else
+        echo "No config (empty)"
+    fi
+}
+
+do_build_or_die() {
+    local p=$1; shift
+    if [ -e scripts/${p}-build ]; then
+        scripts/${p}-build "$@" || err_msg_die "failed to build $p"
+    else
+        echo "No build (empty)"
+    fi
+}
+
 # It's impractical to parse/separate mixed configure and build arguments at the
 # same invocation, so by default (both configure and build), we pass the
 # additional arguments only to build - and configure only reads its values from
@@ -29,19 +47,15 @@ export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig${PKG_CONFIG_PATH-}"
 # the following build will run configure again without args.
 for p in $config_projects; do
     case "$build_mode" in
-        config)
-            highlight_msg "($config_projects) configure-only $p"
-            scripts/${p}-config "$@" || err_msg_die "failed to configure '$p'"
-            ;;
-        build)
-            highlight_msg "($config_projects) build-only $p"
-            scripts/${p}-build "$@" || err_msg_die "failed to build '$p'"
-            ;;
-        *)
-            highlight_msg "($config_projects) building $p"
-            scripts/${p}-config     || err_msg_die "failed to configure '$p'"
-            scripts/${p}-build "$@" || err_msg_die "failed to build '$p'"
-            ;;
+        config) highlight_msg "($config_projects) configure-only $p"
+                do_config_or_die $p "$@"
+                ;;
+         build) highlight_msg "($config_projects) build-only $p"
+                do_build_or_die  $p "$@"
+                ;;
+             *) highlight_msg "($config_projects) building $p"
+                do_config_or_die $p  # no CLI args
+                do_build_or_die  $p "$@"
     esac
 done
 
