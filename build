@@ -16,6 +16,7 @@ config_process_projects_cli=yes
 . scripts/core-config || exit 1
 
 hook_or_die "$config_build_pre" build-pre
+[ -z "$config_host" ] || hook_or_die "$config_build_cross_pre" "$config_host"
 
 [ "${PKG_CONFIG_PATH-}" ] && PKG_CONFIG_PATH=":$PKG_CONFIG_PATH"
 export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig${PKG_CONFIG_PATH-}"
