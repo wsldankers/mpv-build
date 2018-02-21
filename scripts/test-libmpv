@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# This script returns whether libmpv is to be built.
-
-set -e
-
-printf %s "$config_mpv_opts_config" | grep -e '--enable-libmpv' > /dev/null

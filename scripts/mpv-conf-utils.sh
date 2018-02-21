@@ -45,3 +45,10 @@ mpv_cross_guess_opts() {
               *) mpv_cross_set_extra "$arch" linux   linux;;
    esac
 }
+
+mpv_pic_auto() {
+    case "$config_mpv_opts_config" in
+        *--enable-libmpv*) config_build_pic=yes;;
+                        *) config_build_pic=no;;
+    esac
+}

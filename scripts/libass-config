@@ -1,10 +1,8 @@
 #!/bin/sh
 set -e
-BUILD="$(pwd)"
-
 OPTIONS="$@"
 
-if "$BUILD"/scripts/test-libmpv ; then
+if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS --with-pic"
 fi
 if [ "$config_build_host" ]; then
