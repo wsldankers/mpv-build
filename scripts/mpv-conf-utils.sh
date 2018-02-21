@@ -47,6 +47,9 @@ mpv_cross_guess_opts() {
 }
 
 mpv_pic_auto() {
+    # no need for PIC when targetting windows
+    case "$config_build_host" in *mingw*) config_build_pic=no; return; esac
+
     case "$config_mpv_opts_config" in
         *--enable-libmpv*) config_build_pic=yes;;
                         *) config_build_pic=no;;

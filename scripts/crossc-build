@@ -4,6 +4,12 @@ set -e
 cd "$config_crossc_source"
 
 OPTIONS=
+if [ "$config_build_pic" = yes ]; then
+    # No way to add just -fPIC without overriding the default flags, and crossc
+    # is currently only usable on windows, where -fPIC is apparently not
+    # required (according to rossy) even when building libmpv[-shared].
+    true
+fi
 if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS CXX=$config_build_host-g++"
 fi

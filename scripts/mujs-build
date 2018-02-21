@@ -4,6 +4,9 @@ set -e
 cd "$config_mujs_source"
 
 OPTIONS=
+if [ "$config_build_pic" = yes ]; then
+    OPTIONS="$OPTIONS XCFLAGS=-fPIC"
+fi
 if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS CC=$config_build_host-gcc"
 fi

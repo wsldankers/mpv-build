@@ -1,6 +1,16 @@
 #!/bin/sh
 set -e
 
+if [ "$config_build_pic" = yes ]; then
+    # Unknown how to request PIC, but it's set automatically (and apparently
+    # always when not targetting windows).
+    true
+fi
+if [ "$config_build_host" ]; then
+    # cross is handled from the host-specific "cmake" which is setup globally
+    true
+fi
+
 cd "$config_shaderc_source"
 [ -d build ] || mkdir build
 cd build
