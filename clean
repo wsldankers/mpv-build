@@ -18,7 +18,11 @@ hook_or_die "$config_clean_pre" clean-pre
 fail=
 for p in $config_projects; do
     highlight_msg "($config_projects) cleaning $p"
-    scripts/${p}-clean || { warn_msg "failed to clean '$p'"; fail=yes; }
+    if [ -e scripts/${p}-clean ]; then
+        scripts/${p}-clean || { warn_msg "failed to clean '$p'"; fail=yes; }
+    else
+        echo "No clean (empty)"
+    fi
 done
 
 if [ no = "$keep_prefix" ]; then
