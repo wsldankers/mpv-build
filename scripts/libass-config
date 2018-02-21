@@ -7,6 +7,9 @@ OPTIONS="$@"
 if "$BUILD"/scripts/test-libmpv ; then
     OPTIONS="$OPTIONS --with-pic"
 fi
+if [ "$config_build_host" ]; then
+    OPTIONS="$OPTIONS --host=$config_build_host"
+fi
 
 cd "$config_libass_source"
 # Later libass doesn't automatically run configure with autogen.sh anymore

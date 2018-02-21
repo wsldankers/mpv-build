@@ -9,6 +9,9 @@ OPTIONS="--enable-gpl --disable-debug --disable-doc"
 if "$BUILD"/scripts/test-libmpv ; then
     OPTIONS="$OPTIONS --enable-pic"
 fi
+if [ "$config_build_host" ]; then
+    OPTIONS="$OPTIONS --cross-prefix=$config_build_host-"
+fi
 
 OPTIONS="$OPTIONS $USER_OPTS"
 

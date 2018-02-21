@@ -3,4 +3,9 @@ set -e
 
 cd "$config_mujs_source"
 
-make prefix="$config_local_prefix" install  "$@"
+OPTIONS=
+if [ "$config_build_host" ]; then
+    OPTIONS="$OPTIONS CC=$config_build_host-gcc"
+fi
+
+make prefix="$config_local_prefix" install  $OPTIONS "$@"

@@ -2,7 +2,13 @@
 set -e
 
 cd "$config_crossc_source"
-make install-static prefix="$config_local_prefix" "$@"
+
+OPTIONS=
+if [ "$config_build_host" ]; then
+    OPTIONS="$OPTIONS CXX=$config_build_host-g++"
+fi
+
+make install-static prefix="$config_local_prefix" $OPTIONS "$@"
 
 # crossc.pc file has "Libs: ... -lstdc++" when built as static, so no special
 # mpv configure options are required to handle the static linkage.

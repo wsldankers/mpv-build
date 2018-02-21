@@ -1,7 +1,12 @@
 #!/bin/sh
 set -e
 
-echo Using mpv options: "$@"
+OPTIONS=
+if [ "$config_build_host" ]; then
+    OPTIONS="$OPTIONS TARGET=$config_build_host"
+fi
+
+echo Using mpv options: $OPTIONS "$@"
 
 cd "$config_mpv_source"
-./waf configure "$@"
+./waf configure $OPTIONS "$@"
