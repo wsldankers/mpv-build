@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
-OPTIONS=""
 
+OPTIONS=
 if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS --with-pic"
 fi
@@ -9,6 +9,7 @@ if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS --host=$config_build_host"
 fi
 
+set -x
 cd "$config_fribidi_source"
 ./bootstrap
 ./configure --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared --without-glib $OPTIONS "$@"

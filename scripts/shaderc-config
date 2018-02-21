@@ -11,10 +11,10 @@ if [ "$config_build_host" ]; then
     true
 fi
 
+set -x
 cd "$config_shaderc_source"
 [ -d build ] || mkdir build
 cd build
-
 cmake -GNinja \
       -DCMAKE_BUILD_TYPE=Release \
       -DSHADERC_SKIP_TESTS=ON \

@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
 
+set -x
 cd "$config_mpv_source"
 ./waf build "$@"

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
-OPTIONS="$@"
 
+OPTIONS=
 if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS --with-pic"
 fi
@@ -9,8 +9,9 @@ if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS --host=$config_build_host"
 fi
 
+set -x
 cd "$config_libass_source"
 # Later libass doesn't automatically run configure with autogen.sh anymore
-./autogen.sh --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared $OPTIONS
-./configure  --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared $OPTIONS
+./autogen.sh --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared $OPTIONS "$@"
+./configure  --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared $OPTIONS "$@"
 

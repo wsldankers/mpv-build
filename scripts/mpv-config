@@ -6,7 +6,6 @@ if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS TARGET=$config_build_host"
 fi
 
-echo Using mpv options: $OPTIONS "$@"
-
+set -x
 cd "$config_mpv_source"
 ./waf configure $OPTIONS "$@"

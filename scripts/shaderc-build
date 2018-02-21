@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+set -x
 cd "$config_shaderc_source"/build
 ninja install "$@"
 

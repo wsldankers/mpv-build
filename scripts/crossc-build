@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-cd "$config_crossc_source"
-
 OPTIONS=
 if [ "$config_build_pic" = yes ]; then
     # No way to add just -fPIC without overriding the default flags, and crossc
@@ -14,6 +12,8 @@ if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS CXX=$config_build_host-g++"
 fi
 
+set -x
+cd "$config_crossc_source"
 make install-static prefix="$config_local_prefix" $OPTIONS "$@"
 
 # crossc.pc file has "Libs: ... -lstdc++" when built as static, so no special

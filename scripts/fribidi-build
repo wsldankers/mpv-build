@@ -1,4 +1,5 @@
 #!/bin/sh
 set -e
 
+set -x
 make -C "$config_fribidi_source" install "$@" -j1 # race conditions in the make rules

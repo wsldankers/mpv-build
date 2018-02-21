@@ -1,7 +1,6 @@
 #!/bin/sh
 set -e
 
-USER_OPTS="$@"
 OPTIONS="--enable-gpl --disable-debug --disable-doc"
 
 if [ "$config_build_pic" = yes ]; then
@@ -11,11 +10,9 @@ if [ "$config_build_host" ]; then
     OPTIONS="$OPTIONS --cross-prefix=$config_build_host-"
 fi
 
-OPTIONS="$OPTIONS $USER_OPTS"
-
 # Do FFmpeg's job.
-if ! ( echo "$OPTIONS" | grep -q -e --enable-openssl ) &&
-   ! ( echo "$OPTIONS" | grep -q -e --enable-gnutls ) ;
+if ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-openssl ) &&
+   ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-gnutls ) ;
 then
     if pkg-config gnutls ; then
         OPTIONS="$OPTIONS --enable-gnutls"
@@ -26,8 +23,7 @@ then
     fi
 fi
 
-echo Using ffmpeg options: $OPTIONS
-
+set -x
 mkdir -p "$config_local_prefix"/tmp/ffmpeg_build
 cd "$config_local_prefix"/tmp/ffmpeg_build
-"$config_ffmpeg_source"/configure --prefix="$config_local_prefix" --enable-static --disable-shared $OPTIONS
+"$config_ffmpeg_source"/configure --prefix="$config_local_prefix" --enable-static --disable-shared $OPTIONS "$@"

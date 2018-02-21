@@ -1,4 +1,5 @@
 #!/bin/sh
 set -e
 
-make -C "$config_local_prefix"/tmp/ffmpeg_build install $@
+set -x
+make -C "$config_local_prefix"/tmp/ffmpeg_build install "$@"
