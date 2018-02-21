@@ -57,7 +57,8 @@ accm_main() {
         set -- --win $opts -- "$p0win" ^ "$p0" "$p1" "$p1win"
 
     else
-        set -- $opts -- "$p0" /usr/local
+        # Just add our prefix at {C|CXX|LD}_FLAGS
+        set -- -f $opts -- "$p0"
     fi
 
     out="$(./tools/ccmpp "$@")" || accm_err_die "failed: ./tools/ccmpp $*"
