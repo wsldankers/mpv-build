@@ -12,11 +12,15 @@ fi
 
 # Do FFmpeg's job.
 if ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-openssl ) &&
+   ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-libtls ) &&
    ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-gnutls ) ;
 then
     if pkg-config gnutls ; then
         OPTIONS="$OPTIONS --enable-gnutls"
         echo "Auto-enabling GnuTLS."
+    elif pkg-config libtls ; then
+        OPTIONS="$OPTIONS --enable-nonfree --enable-libtls"
+        echo "Auto-enabling LibreSSL (creates a non-redistributable binary)."
     elif pkg-config openssl ; then
         OPTIONS="$OPTIONS --enable-nonfree --enable-openssl"
         echo "Auto-enabling OpenSSL (creates a non-redistributable binary)."
