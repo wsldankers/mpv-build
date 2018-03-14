@@ -2,4 +2,6 @@
 
 if [ -f "$config_fribidi_source"/Makefile ];then
     make -C "$config_fribidi_source" distclean
+    >&2 printf "\n%s\n" "=== distclean not always enough - removing untracked files at ./lib ==="
+    cd "$config_fribidi_source" && git clean -xfd -- ./lib
 fi

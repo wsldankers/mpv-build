@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-OPTIONS=
+OPTIONS="--enable-static --disable-shared --without-glib --disable-docs"
 if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS --with-pic"
 fi
@@ -11,5 +11,9 @@ fi
 
 set -x
 cd "$config_fribidi_source"
-./bootstrap
-./configure --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" --enable-static --disable-shared --without-glib $OPTIONS "$@"
+if [ -e ./bootstrap ]; then
+    ./bootstrap
+else
+    NOCONFIGURE=1 ./autogen.sh
+fi
+./configure --prefix="$config_local_prefix" --libdir="$config_local_prefix/lib" $OPTIONS "$@"
