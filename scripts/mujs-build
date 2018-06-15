@@ -11,4 +11,4 @@ fi
 
 set -x
 cd "$config_mujs_source"
-make prefix="$config_local_prefix" install  $OPTIONS "$@"
+make prefix="$config_local_prefix" HAVE_READLINE=no install $OPTIONS "$@"
