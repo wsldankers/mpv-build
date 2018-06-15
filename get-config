@@ -9,4 +9,5 @@ config_process_projects_cli=yes
 [ "$1" = "${1#config_}" ] && err_msg_die "variable name must start with config_"
 has_var "$1" || err_msg_die "cannot evaluate config variable '$1'"
 
-printf %s "$(var_val $1)"
+var_val $1
+printf \\n
