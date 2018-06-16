@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-OPTIONS="--enable-gpl --disable-debug --disable-doc"
+OPTIONS="--enable-gpl --disable-debug --disable-doc --enable-static --disable-shared"
 
 if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS --enable-pic"
@@ -30,4 +30,4 @@ fi
 set -x
 mkdir -p "$config_local_prefix"/tmp/ffmpeg_build
 cd "$config_local_prefix"/tmp/ffmpeg_build
-"$config_ffmpeg_source"/configure --prefix="$config_local_prefix" --enable-static --disable-shared $OPTIONS "$@"
+"$config_ffmpeg_source"/configure --prefix="$config_local_prefix" $OPTIONS "$@"

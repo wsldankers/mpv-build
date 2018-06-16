@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+OPTIONS="-GNinja -DCMAKE_BUILD_TYPE=Release -DSHADERC_SKIP_TESTS=ON -DBUILD_SHARED_LIBS=OFF"
+
 if [ "$config_build_pic" = yes ]; then
     # Unknown how to request PIC, but it's set automatically (and apparently
     # always when not targetting windows).
@@ -15,11 +17,6 @@ set -x
 cd "$config_shaderc_source"
 [ -d build ] || mkdir build
 cd build
-cmake -GNinja \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DSHADERC_SKIP_TESTS=ON \
-      -DBUILD_SHARED_LIBS=OFF \
+cmake -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
       -DCMAKE_INSTALL_LIBDIR="$config_local_prefix"/lib \
-      -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
-      "$@" \
-      ..
+      $OPTIONS "$@" ..

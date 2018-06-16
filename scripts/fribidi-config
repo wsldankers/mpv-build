@@ -2,6 +2,7 @@
 set -e
 
 OPTIONS="--enable-static --disable-shared --without-glib --disable-docs"
+
 if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS --with-pic"
 fi

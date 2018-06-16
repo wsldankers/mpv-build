@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-OPTIONS=
+OPTIONS="HAVE_READLINE=no"
+
 if [ "$config_build_pic" = yes ]; then
     OPTIONS="$OPTIONS XCFLAGS=-fPIC"
 fi
@@ -10,5 +11,4 @@ if [ "$config_build_host" ]; then
 fi
 
 set -x
-cd "$config_mujs_source"
-make prefix="$config_local_prefix" HAVE_READLINE=no install $OPTIONS "$@"
+make -C "$config_mujs_source" install-static prefix="$config_local_prefix" $OPTIONS "$@"
