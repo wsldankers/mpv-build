@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+set -x
+make -C "$config_local_prefix"/tmp/libaom_build install "$@"

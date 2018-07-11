@@ -27,6 +27,14 @@ then
     fi
 fi
 
+if pkg-config aom &&
+   ( "$config_ffmpeg_source"/configure --help 2>&1 | grep -q -e ble-libaom ) &&
+   ! ( echo "$OPTIONS" "$@" | grep -q -e ble-libaom ) ;
+then
+    OPTIONS="$OPTIONS --enable-libaom"
+    echo "Auto-enabling libaom."
+fi
+
 set -x
 mkdir -p "$config_local_prefix"/tmp/ffmpeg_build
 cd "$config_local_prefix"/tmp/ffmpeg_build

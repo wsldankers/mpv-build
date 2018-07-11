@@ -1,0 +1,3 @@
+#!/bin/sh
+
+rm -rf "$config_local_prefix"/tmp/libaom_build

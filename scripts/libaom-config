@@ -1,0 +1,38 @@
+#!/bin/sh
+set -e
+
+OPTIONS="-DENABLE_DOCS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_TESTDATA=OFF -DENABLE_TESTS=OFF -DENABLE_TOOLS=OFF -DBUILD_SHARED_LIBS=OFF"
+
+if [ "$config_build_pic" = yes ]; then
+    # untested, see https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
+    OPTIONS="$OPTIONS -DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+fi
+if [ "$config_build_host" ]; then
+    # cross is handled from the host-specific "cmake" which is setup globally
+    # though libaom also supports: CROSS=$config_build_host-
+    true
+fi
+
+GEN_IS_VS=
+if cmake --system-information | grep 'CMAKE_GENERATOR "' | grep -qi 'visual studio'; then
+    # on msys[2] cmake might default to visual studio - not good for us, so
+    # we override with -G"MSYS Makefiles" - which has space and requires quotes,
+    # but if it's empty then cmake complains. so we can either use eval or
+    # duplicate the whole command - we duplicate (below) as it's more readable.
+    GEN_IS_VS=yes
+fi
+
+set -x
+cd "$config_local_prefix"
+[ -d ./tmp/libaom_build ] || mkdir -p ./tmp/libaom_build
+cd ./tmp/libaom_build
+if [ "$GEN_IS_VS" ]; then
+    cmake -G"MSYS Makefiles" \
+          -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
+          -DCMAKE_INSTALL_LIBDIR="$config_local_prefix"/lib \
+          $OPTIONS "$@" "$config_libaom_source"
+else
+    cmake -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
+          -DCMAKE_INSTALL_LIBDIR="$config_local_prefix"/lib \
+          $OPTIONS "$@" "$config_libaom_source"
+fi
