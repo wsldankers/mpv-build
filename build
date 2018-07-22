@@ -21,6 +21,13 @@ hook_or_die "$config_build_internal_pre"
 [ "${PKG_CONFIG_PATH-}" ] && PKG_CONFIG_PATH=":$PKG_CONFIG_PATH"
 export PKG_CONFIG_PATH="$config_local_prefix/lib/pkgconfig${PKG_CONFIG_PATH-}"
 
+# some projects don't have .pc file (e.g. shaderc), and otherwise it doesn't
+# hurt to have those FLAGS (except on windows if our prefix path has spaces,
+# but this already breaks in general elsewhere).
+export CFLAGS="-I$config_local_prefix/include ${CFLAGS-}"
+export CXXFLAGS="-I$config_local_prefix/include ${CXXFLAGS-}"
+export LDFLAGS="-L$config_local_prefix/lib ${LDFLAGS-}"
+
 do_config_or_die() {
     local p=$1; shift
     if [ -e scripts/${p}-config ]; then
