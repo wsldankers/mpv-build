@@ -11,10 +11,12 @@ if [ "$config_build_host" ]; then
 fi
 
 # Do FFmpeg's job.
-if ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-openssl ) &&
-   ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-libtls ) &&
-   ! ( echo "$OPTIONS" "$@" | grep -q -e --enable-gnutls ) ;
-then
+case "$OPTIONS $*" in
+*able-gnutls*|*able-libtls*|*able-openssl*|*able-mbedtls*|*able-schannel*|*ble-securetransport*)
+    # ffmpeg auto-detect/enable mbedtls/schannel/securetransport, but are not.
+    # the user can enable one of those manually to prevent our auto-enable.
+    echo "Custom ssl/tls options found. Skipping auto-enable.";;
+*)
     if pkg-config gnutls ; then
         OPTIONS="$OPTIONS --enable-gnutls"
         echo "Auto-enabling GnuTLS."
@@ -24,8 +26,8 @@ then
     elif pkg-config openssl ; then
         OPTIONS="$OPTIONS --enable-nonfree --enable-openssl"
         echo "Auto-enabling OpenSSL (creates a non-redistributable binary)."
-    fi
-fi
+    fi;;
+esac
 
 if pkg-config aom &&
    ( "$config_ffmpeg_source"/configure --help 2>&1 | grep -q -e ble-libaom ) &&
