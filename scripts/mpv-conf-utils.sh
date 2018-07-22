@@ -1,5 +1,16 @@
 # mpv cross setup, feel free to replace config_build_cross_pre with your own
 
+mpv_guess_windows() {
+    # if we cross build for mingw, or not cross-build and uname looks windows
+    case $config_build_host in
+        *mingw*) config_target_windows=yes;;
+             '') case "$(uname | tr A-Z a-z)" in
+                     *windows*|*mingw*) config_target_windows=yes
+                 esac
+    esac
+    [ "$config_target_windows" ] || config_target_windows=no
+}
+
 # Generic cross build setup. Note: mpv/ffmpeg also need additional OS[/arch]
 mpv_cross_base() {
    local host="$config_build_host"

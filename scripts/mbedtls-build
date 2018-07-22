@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+
+set -x
+make -C "$config_local_prefix"/tmp/mbedtls_build install "$@"
+
+PCFILE="$config_local_prefix"/lib/pkgconfig/mbedtls.pc
+if ! [ -e "$PCFILE" ]; then
+    # create .pc file - good enough for ffmpeg
+    ver=$(grep MBEDTLS_VERSION_STRING"[[:space:]]" \
+               "$config_local_prefix"/include/mbedtls/version.h \
+               | sed -n 's/.*"\(.*\)".*/\1/p')
+    : ${ver:=1}  # this also currently works if we couldn't find a version
+
+    cat <<EOF > "$PCFILE"
+prefix=$config_local_prefix
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: mbedtls
+Description: static mbedtls in mpv-build
+Version: $ver
+Libs: -L\${libdir} -lmbedtls -lmbedx509 -lmbedcrypto
+Libs.private:
+Cflags: -I\${includedir}
+EOF
+
+fi

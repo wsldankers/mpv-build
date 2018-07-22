@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+OPTIONS="
+-DENABLE_PROGRAMS=OFF
+-DENABLE_TESTING=OFF
+-DUSE_STATIC_MBEDTLS_LIBRARY=ON
+-DUSE_SHARED_MBEDTLS_LIBRARY=OFF
+"
+
+if [ "$config_build_pic" = yes ]; then
+    # untested, see https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
+    OPTIONS="$OPTIONS -DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+fi
+if [ "$config_build_host" ]; then
+    # cross is handled from the host-specific "cmake" which is setup globally
+    true
+fi
+
+GEN_IS_VS=
+if cmake --system-information | grep 'CMAKE_GENERATOR "' | grep -qi 'visual studio'; then
+    # on msys[2] cmake might default to visual studio - not good for us, so we
+    # override it later with -G"MSYS Makefiles"
+    GEN_IS_VS=yes
+fi
+
+set -x
+mkdir -p "$config_local_prefix"/tmp/mbedtls_build
+cd "$config_local_prefix"/tmp/mbedtls_build
+cmake ${GEN_IS_VS:+"-GMSYS Makefiles"} \
+      -DCMAKE_HOST_UNIX=1 \
+      -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
+      -DLIB_INSTALL_DIR="$config_local_prefix"/lib \
+      $OPTIONS "$@" "$config_mbedtls_source"
