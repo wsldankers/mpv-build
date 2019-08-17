@@ -1,0 +1,5 @@
+#! /bin/sh
+
+set -ex
+
+exec meson --default-library=static --buildtype=release --libdir=lib --prefix="$config_local_prefix" "$config_libplacebo_source/build" "$config_libplacebo_source"
