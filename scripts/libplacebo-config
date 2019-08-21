@@ -2,40 +2,27 @@
 
 set -ex
 
+OPTIONS=
+
 case $config_build_pic in yes)
-	b_staticpic=--b_staticpic=true
+	OPTIONS="$OPTIONS --b_staticpic=true"
 ;; no)
-	b_staticpic=--b_staticpic=false
+	OPTIONS="$OPTIONS --b_staticpic=false"
 esac
 
 case $config_build_host in ?*)
-	tuple=$($config_build_host-gcc -dumpmachine)
-	cpu=${config_build_host%%-*}
-	cpu_family=${tuple%%-*}
-	system=${tuple#*-}
-	system=${system%%-*}
+	case $OPTIONS in *cross-file*) ;; *)
+		cat >&2 <<EOT
+It seems you are trying to cross-compile libplacebo.
+This is currently not implemented automatically because meson requires a
+target host specific configuration file for that.
 
-	case $($config_build_host-cpp -dM /dev/null) in *__ORDER_BIG_ENDIAN__*)
-		endian=big
-	;; *)
-		endian=little
-	esac
+Please add an option --cross-file=/path/to/meson-cross.txt to \$OPTIONS.
 
-	cat >"$config_local_prefix/crossfile.txt" <<EOT
-[binaries]
-c = '$config_build_host-gcc'
-cpp = '$config_build_host-gcc -E'
-ar = '$config_build_host-ar'
-strip = '$config_build_host-strip'
-
-[host_machine]
-system = '$system'
-cpu_family = '$cpu_family'
-cpu = '$cpu'
-endian = '$endian'
+See https://mesonbuild.com/Cross-compilation.html for details.
 EOT
-
-	cross_file="--cross-file=$config_local_prefix/crossfile.txt"
+		exit 2
+	esac
 esac
 
-exec meson setup --buildtype=release --default-library=static $b_staticpic "$cross_file" --libdir=lib --prefix="$config_local_prefix" "$config_libplacebo_source/build" "$config_libplacebo_source"
+exec meson setup --buildtype=release --default-library=static --libdir=lib --prefix="$config_local_prefix" $OPTIONS "$config_libplacebo_source/build" "$config_libplacebo_source"
