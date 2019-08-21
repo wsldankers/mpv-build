@@ -4,5 +4,4 @@ set -e
 
 [ -d "$config_libplacebo_source/build" ] || exit 0
 
-cd "$config_libplacebo_source"
-exec rm -rf build
+cd "$config_libplacebo_source" && exec rm -rf build

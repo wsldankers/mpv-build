@@ -11,13 +11,14 @@ case $config_build_pic in yes)
 esac
 
 case $config_build_host in ?*)
-	case $OPTIONS in *cross-file*) ;; *)
+	case $* in *cross-file*) ;; *)
 		cat >&2 <<EOT
 It seems you are trying to cross-compile libplacebo.
 This is currently not implemented automatically because meson requires a
 target host specific configuration file for that.
 
-Please add an option --cross-file=/path/to/meson-cross.txt to \$OPTIONS.
+Please use an option --cross-file=/path/to/meson-cross.txt to enable
+cross-compilation.
 
 See https://mesonbuild.com/Cross-compilation.html for details.
 EOT
@@ -25,4 +26,4 @@ EOT
 	esac
 esac
 
-exec meson setup --buildtype=release --default-library=static --libdir=lib --prefix="$config_local_prefix" $OPTIONS "$config_libplacebo_source/build" "$config_libplacebo_source"
+exec meson setup --buildtype=release --default-library=static --libdir=lib --prefix="$config_local_prefix" $OPTIONS "$@" "$config_libplacebo_source/build" "$config_libplacebo_source"
