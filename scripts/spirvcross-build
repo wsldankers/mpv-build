@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+set -x
+cd "$config_spirvcross_source"/build
+make install "$@"
+
+# no .pc file for spirv-cross static, create spirv-cross.pc
+# shared .pc.in: https://github.com/KhronosGroup/SPIRV-Cross/blob/master/pkg-config/spirv-cross-c-shared.pc.in
+# to exposes the static ones, and adds -lstdc++ at Libs: such that
+# mpv can link with it without adding special static handling at wscript.
+pcfile="$config_local_prefix"/lib/pkgconfig/spirv-cross.pc
+[ -e "$(dirname "$pcfile")" ] || mkdir -p "$(dirname "$pcfile")"
+cat <<- PCFILE > "$pcfile"
+	prefix=$config_local_prefix
+	libdir=\${prefix}/lib
+	includedir=\${prefix}/include/spirv_cross
+
+	Name: spirv-cross-c-static
+	Description: C API for SPIRV-Cross
+	Version: 0.1
+	Libs: -L\${libdir} -lspirv-cross-c -lspirv-cross-core -lspirv-cross-cpp -lspirv-cross-glsl -lspirv-cross-hlsl -lspirv-cross-msl -lspirv-cross-reflect -lspirv-cross-util -lstdc++
+	Libs.private:
+	Cflags: -I\${includedir}
+PCFILE

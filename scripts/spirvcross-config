@@ -1,0 +1,26 @@
+#!/bin/sh
+set -e
+
+OPTIONS="
+-DCMAKE_BUILD_TYPE=Release
+-DSPIRV_CROSS_STATIC=ON
+-DSPIRV_CROSS_SHARED=OFF
+-DSPIRV_CROSS_ENABLE_TESTS=OFF
+"
+
+if [ "$config_build_pic" = yes ]; then
+    # Unknown how to request PIC, but it's set automatically (and apparently
+    # always when not targetting windows).
+    true
+fi
+if [ "$config_build_host" ]; then
+    # cross is handled from the host-specific "cmake" which is setup globally
+    true
+fi
+
+set -x
+cd "$config_spirvcross_source"
+[ -d build ] || mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX="$config_local_prefix" \
+      $OPTIONS "$@" ..
