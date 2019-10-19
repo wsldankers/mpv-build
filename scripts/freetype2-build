@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+set -x
+
+make -C "$config_local_prefix"/tmp/freetype2_build install "$@"
+
+# the .pc file which cmakes generates is a mess. edit it.
+pcfile="$config_local_prefix"/lib/pkgconfig/freetype2.pc
+content=$(cat "$pcfile");
+
+# the cmake build creates different .pc version than configure+make
+# conf+make: 22.1.16   cmake: 2.9.1
+# it looks like the cmake one is the correct one, but other packages (libass)
+# expect to see >= 9.10.3 - which is apparently the libtool version.. wtf.
+case $content in *"Version: "?"."*)  # one digit major version is "bad"
+    cat "$pcfile" \
+        | sed 's/^Version:.*/Version: 22.1.16/' \
+        > "$pcfile-" && mv "$pcfile-" "$pcfile"
+esac
+
+# usually there's no bzip2.pc, and the conf+make knows to use Libs.private: -lbz2 ..
+# on such case, but the cmake .pc file requires bzip2(.pc)
+case $content in *bzip2*)
+    if ! pkg-config bzip2; then
+        # remove "bzip2" as the first/middle/last/only required package
+        cat "$pcfile" \
+            | sed 's/\sbzip2,//' \
+            | sed 's/,\sbzip2//' \
+            | sed 's/\sbzip2//' \
+            | sed 's/\(^Libs.private:.*\)/\1 -lbz2/' \
+            > "$pcfile-" && mv "$pcfile-" "$pcfile"
+    fi
+esac
