@@ -14,6 +14,7 @@ export build_mode="$mode"  # allow hooks to see this too
 cd "$(dirname "$0")"
 config_process_projects_cli=yes
 . scripts/core-config || exit 1
+. pkg/pkg-utils.sh
 
 hook_or_die "$config_build_pre" build-pre
 hook_or_die "$config_build_internal_pre"
@@ -30,9 +31,12 @@ export LDFLAGS="-L$config_local_prefix/lib ${LDFLAGS-}"
 
 do_config_or_die() {
     local p=$1; shift
-    if [ -e scripts/${p}-config ]; then
-        scripts/${p}-config $(var_val config_${p}_opts_config) "$@" ||
-            err_msg_die "failed to configure $p"
+    local opts; opts=$(var_val config_${p}_opts_config)
+
+    if pkg_has $p; then
+        (pkg_load $p && pkg_configure $opts "$@") || err_msg_die "failed to configure $p"
+    elif [ -e scripts/${p}-config ]; then
+        scripts/${p}-config $opts "$@" || err_msg_die "failed to configure $p"
     else
         echo "No config (empty)"
     fi
@@ -40,9 +44,12 @@ do_config_or_die() {
 
 do_build_or_die() {
     local p=$1; shift
-    if [ -e scripts/${p}-build ]; then
-        scripts/${p}-build $(var_val config_${p}_opts_build) "$@" ||
-            err_msg_die "failed to build $p"
+    local opts; opts=$(var_val config_${p}_opts_build)
+
+    if pkg_has $p; then
+        (pkg_load $p && pkg_build $opts "$@") || err_msg_die "failed to build $p"
+    elif [ -e scripts/${p}-build ]; then
+        scripts/${p}-build $opts "$@" || err_msg_die "failed to build $p"
     else
         echo "No build (empty)"
     fi
