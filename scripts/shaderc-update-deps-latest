@@ -13,6 +13,7 @@ clone_or_pull() (
 )
 
 cd "$config_shaderc_source"
-clone_or_pull https://github.com/google/glslang.git third_party/glslang
+
+clone_or_pull https://github.com/KhronosGroup/glslang.git third_party/glslang
 clone_or_pull https://github.com/KhronosGroup/SPIRV-Tools.git third_party/spirv-tools
 clone_or_pull https://github.com/KhronosGroup/SPIRV-Headers.git third_party/spirv-headers
