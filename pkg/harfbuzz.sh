@@ -7,6 +7,7 @@ OPTIONS="
     --prefix=$PREFIX
     --enable-static
     --disable-shared
+    --with-freetype=no
 "
 
 if [ "$config_build_pic" = yes ]; then
