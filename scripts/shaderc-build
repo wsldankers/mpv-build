@@ -16,7 +16,7 @@ cat <<- PCFILE > "$pcfile"
 
 	Name: libshaderc
 	Description: static libshaderc in mpv-build
-	Version: 0.1
+	Version: 2019.1
 	Libs: -L\${libdir} -lshaderc_combined -lstdc++
 	Libs.private:
 	Cflags: -I\${includedir}
