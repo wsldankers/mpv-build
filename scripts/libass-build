@@ -3,3 +3,5 @@ set -e
 
 set -x
 make -C "$config_libass_source" install "$@"
+
+scripts/statify-pc.sh -b "$config_local_prefix"/lib/pkgconfig/libass.pc

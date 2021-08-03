@@ -9,12 +9,5 @@ fi
 
 set -x
 
-# add missing private dependencies from libass.pc
-# this is necessary due to the hybrid static / dynamic nature of the build
-# not all libs are avilable on all platforms, so one by one, and accept fail
-for assdep in fontconfig harfbuzz fribidi; do
-    export LDFLAGS="$LDFLAGS $(pkg-config --libs "$assdep")" || :
-done
-
 cd "$config_mpv_source"
 ./waf configure $OPTIONS "$@"
