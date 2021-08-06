@@ -8,8 +8,8 @@
 #
 # modify pkg-config files PCFILE... for static linking with these libs even
 # if the packages deps are retrieved using pkg-config without --static,
-# by adding the private Libs/Requires values to the respective non-private
-# lines, and then deleting the private lines.
+# by adding the private Libs/Requires/Cflags values to the respective
+# non-private lines, and then deleting the private lines.
 
 echo() { printf %s\\n "$*"; }
 
@@ -62,8 +62,11 @@ for fname; do
     out=$(  echo "$src" \
             | pcappend Requires ","  "$(pcget "$src" Requires.private)" \
             | pcappend Libs     " "  "$(pcget "$src" Libs.private)" \
+            | pcappend Cflags   " "  "$(pcget "$src" Cflags.private)" \
             | pcremove Requires.private \
-            | pcremove Libs.private  )
+            | pcremove Libs.private \
+            | pcremove Cflags.private \
+        )
     if [ "$p" ]; then echo "$out"; else echo "$out" > "$fname"; fi
 done
 
