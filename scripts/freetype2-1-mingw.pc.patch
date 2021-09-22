@@ -1,0 +1,34 @@
+From 49bf4ae26fa60d6072491e83a8315b86c02b540a Mon Sep 17 00:00:00 2001
+From: "Avi Halachmi (:avih)" <avihpit@yahoo.com>
+Date: Sat, 30 Nov 2019 10:46:32 +0200
+Subject: [PATCH] cmake: WIN32 hack: allow to set UNIX to get a .pc file
+
+Before commit 3aaae716b setting the only way to get a .pc file from
+cmake with a win32 build was to set UNIX, however, at that commit UNIX
+now also chooses the unix ftsystem.h, which doesn't work on win32.
+
+Now when choosing ftsystem.h, if both UNIX and WIN32 are defined, choose
+the generic (non-unix) one.
+
+This is a hack until the .pc can be configured manually or
+automatically independently of UNIX.
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 94e0b37eb..3038264d8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -363,7 +363,7 @@ set(BASE_SRCS
+   src/winfonts/winfnt.c
+ )
+ 
+-if (UNIX)
++if (UNIX AND NOT WIN32)
+   list(APPEND BASE_SRCS "builds/unix/ftsystem.c")
+ else ()
+   list(APPEND BASE_SRCS "src/base/ftsystem.c")
+-- 
+2.17.1
+

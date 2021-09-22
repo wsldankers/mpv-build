@@ -1,13 +1,17 @@
 #!/bin/sh
 set -e
 
+# to generate a freertye2.pc for windows with cmake:
+# - before 3aaae716b (post 2.10.1): -DUNIX:BOOL=true
+# - 3aaae716b .. before 66005cbae (pre 2.11.0): like above AND scripts/freetype2-1-mingw.pc.patch
+#   (and non-shallow clone, or else it won't succeed to apply)
+# - since 66005cbae: no need to define UNIX and no need for a patch.
+
 OPTIONS="
--DUNIX:BOOL=true
 -DFT_DISABLE_HARFBUZZ=TRUE
 -DFT_DISABLE_PNG=TRUE
 -DFT_DISABLE_BROTLI=TRUE
 "
-# -DBUILD_SHARED_LIBS:BOOL=true
 
 if [ "$config_build_pic" = yes ]; then
     # untested, see https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
