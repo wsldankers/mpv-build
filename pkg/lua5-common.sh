@@ -1,4 +1,7 @@
-# lua
+
+# $PKG is lua51 or lua52
+# the cmake build creates liblua.a, we change it to lib$PKG.a
+# the pkg-config file name is similar - created as $PKG.pc
 set -e
 
 BLD_DIR="$config_local_prefix"/tmp/${PKG}_build
@@ -37,7 +40,7 @@ pkg_build() {
 
     # and create a .pc file
     mkdir -p "$PREFIX"/lib/pkgconfig
-    cat > "$PREFIX"/lib/pkgconfig/lua.pc <<EOF
+    cat > "$PREFIX"/lib/pkgconfig/$PKG.pc <<EOF
 prefix=$PREFIX
 libdir=\${prefix}/lib
 includedir=\${prefix}/include
@@ -45,12 +48,15 @@ includedir=\${prefix}/include
 Name: lua
 Description: Lua
 Version: $(grep version <"$PKG_source/dist.info" | sed 's/.*"\(.*\)".*/\1/')
-Libs: -L\${libdir} -llua
+Libs: -L\${libdir} -l$PKG
 Libs.private: -lm
 Cflags: -I\${includedir}
 EOF
 
     pkg_cp_pc "$PREFIX"
+
+    # rename to liblua5x.a
+    mv "$PREFIX"/lib/liblua.a "$PREFIX/lib/lib$PKG.a"
 }
 
 pkg_clean() {
