@@ -108,22 +108,22 @@ id_in() {
 # full path. export globals + source-dirs of active-projects and main project.
 # existing dirs ensured to be exported as full paths. msg and die on errors.
 finalize_config_export_or_die() {
-    local p=
+    f1_p=
     [ "${config_projects:-}" ] || err_msg_die "no projects to process"
-    for p in $config_projects $config_main; do
-        validate_id_or_die "$p"
+    for f1_p in $config_projects $config_main; do
+        validate_id_or_die "$f1_p"
         # set missing configs to empty
-        eval :  \${config_${p}_source:=} \
-                \${config_${p}_update:=} \
-                \${config_${p}_git:=} \
-                \${config_${p}_release_prefix:=} \
-                \${config_${p}_update_post:=} \
-                \${config_${p}_opts_config:=} \
-                \${config_${p}_opts_build:=}
+        eval :  \${config_${f1_p}_source:=} \
+                \${config_${f1_p}_update:=} \
+                \${config_${f1_p}_git:=} \
+                \${config_${f1_p}_release_prefix:=} \
+                \${config_${f1_p}_update_post:=} \
+                \${config_${f1_p}_opts_config:=} \
+                \${config_${f1_p}_opts_build:=}
 
-        [ "$(var_val config_${p}_source)" ] || err_msg_die "unknown source-dir for '$p'"
-        [ -d "$(var_val config_${p}_source)" ] && var_to_real_dir_or_die config_${p}_source
-        export config_${p}_source
+        [ "$(var_val config_${f1_p}_source)" ] || err_msg_die "unknown source-dir for '$f1_p'"
+        [ -d "$(var_val config_${f1_p}_source)" ] && var_to_real_dir_or_die config_${f1_p}_source
+        export config_${f1_p}_source
     done
     export config_projects
 
@@ -147,23 +147,23 @@ finalize_config_export_or_die() {
 # the CLI update value for each project FOO, if exists, sets $config_FOO_update .
 # dies with a message on invalid project name.
 apply_project_args() {
-    local projects=
-    local proj=
-    local update=
-    for proj in "$@"; do
-        [ "$proj" ] && [ -z "${proj##-*}" ] && break  # abort on first -* arg
+    a1_projects=
+    a1_proj=
+    a1_update=
+    for a1_proj in "$@"; do
+        [ "$a1_proj" ] && [ -z "${a1_proj##-*}" ] && break  # abort on first -* arg
 
-        update="${proj#*/}"  # remove the smallest */ prefix
-        [ "$update" = "$proj" ] && update=  # empty if there wass no such prefix
-        proj="${proj%%/*}"  # remove the biggest /* suffix
-        validate_id_or_die "$proj"
+        a1_update="${a1_proj#*/}"  # remove the smallest */ prefix
+        [ "$a1_update" = "$a1_proj" ] && a1_update=  # empty if there wass no such prefix
+        a1_proj="${a1_proj%%/*}"  # remove the biggest /* suffix
+        validate_id_or_die "$a1_proj"
 
-        [ "$projects" ] && projects="$projects "
-        projects="${projects}${proj}"
+        [ "$a1_projects" ] && a1_projects="$a1_projects "
+        a1_projects="${a1_projects}${a1_proj}"
 
-        [ "$update" ] && var_set config_${proj}_update "$update"
+        [ "$a1_update" ] && var_set config_${a1_proj}_update "$a1_update"
     done
-    [ "$projects" ] && config_projects="$projects"
+    [ "$a1_projects" ] && config_projects="$a1_projects"
 }
 
 # main

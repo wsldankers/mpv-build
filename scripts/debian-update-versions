@@ -26,8 +26,8 @@ var_val() { eval printf %s \"\$$1\"; }
 
 # $1: the main project [,$2...: active projects (may include the main one)]
 update_changelog() {
-    local deps=
-    local main=$1 && shift
+    deps=
+    main=$1 && shift
     while [ $# -gt 0 ]; do
         [ $1 = $main ] && shift && continue
         [ "$deps" ] && deps="$deps, "

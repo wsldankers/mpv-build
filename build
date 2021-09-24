@@ -30,8 +30,7 @@ export CXXFLAGS="-I$config_local_prefix/include ${CXXFLAGS-}"
 export LDFLAGS="-L$config_local_prefix/lib ${LDFLAGS-}"
 
 do_config_or_die() {
-    local p=$1; shift
-    local opts; opts=$(var_val config_${p}_opts_config)
+    opts=$(var_val config_${p}_opts_config)
 
     if pkg_has $p; then
         (pkg_load $p && pkg_configure $opts "$@") || err_msg_die "failed to configure $p"
@@ -43,8 +42,7 @@ do_config_or_die() {
 }
 
 do_build_or_die() {
-    local p=$1; shift
-    local opts; opts=$(var_val config_${p}_opts_build)
+    opts=$(var_val config_${p}_opts_build)
 
     if pkg_has $p; then
         (pkg_load $p && pkg_build $opts "$@") || err_msg_die "failed to build $p"
@@ -69,14 +67,14 @@ for p in $config_projects; do
     fi
     case "$build_mode" in
         config) highlight_msg "($config_projects) configure-only $p"
-                do_config_or_die $p "$@"
+                do_config_or_die "$@"
                 ;;
          build) highlight_msg "($config_projects) build-only $p"
-                do_build_or_die  $p "$@"
+                do_build_or_die  "$@"
                 ;;
              *) highlight_msg "($config_projects) building $p"
-                do_config_or_die $p  # no CLI args
-                do_build_or_die  $p "$@"
+                do_config_or_die  # no CLI args
+                do_build_or_die  "$@"
     esac
 done
 

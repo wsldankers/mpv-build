@@ -14,7 +14,7 @@
 accm_err_die() { printf "Error: %s\n" "$1"; exit 1; }
 
 accm_main() {
-    local p0=; local p1=; local port=; local brew=; local opts=; local out=
+    p0= p1= port= brew= opts= out=
     p0="$(./get-config -- config_local_prefix)" ||
         accm_err_die "cannot read config_local_prefix"
 
@@ -47,8 +47,8 @@ accm_main() {
         p1="$MINGW_PREFIX"
         # p1 is /mingw{32|64} , but it's also used as X:/msys2/mingw{32|64}
         # `pwd -W` is the full "native" path format as X:/foo/bar
-        local p0win="$(cd "$p0" && pwd -W)"  # $config_local_prefix should exist
-        local p1win="$(cd "$p1" && pwd -W)"
+        p0win="$(cd "$p0" && pwd -W)"  # $config_local_prefix should exist
+        p1win="$(cd "$p1" && pwd -W)"
         [ "$p0win" ] && [ "$p1win" ] || accm_err_die "cannot find win paths"
 
         # Windows shenanigans: expose the native style and ask pkg-config to

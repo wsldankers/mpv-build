@@ -32,7 +32,7 @@ remote_tags() {
 
 # $1: tag prefix
 highest_release_tag_ref() {
-    local tag="$(remote_tags | grep -v rc | grep -v dev | versort_with_prefix "$1" | tail -n 1)"
+    tag="$(remote_tags | grep -v rc | grep -v dev | versort_with_prefix "$1" | tail -n 1)"
     [ $? = 0 ] && [ "$tag" ] || return 1
     printf %s "refs/tags/$tag"
 }

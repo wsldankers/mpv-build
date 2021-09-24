@@ -41,7 +41,7 @@
 
 # [$1: Error message -> mini usage + use stderr]
 ccm_usage() {
-    local o=1
+    o=1
     [ $# = 0 ] || { o=2; >&2 printf "%s\n" "Error: $1"; }
     >&$o echo "Usage: ccmpp [-h] [-f] [--win[=no]] [--] prefix1[#libdir1] [prefix2[#..] ...]"
     >&$o echo "Control Compiler Multi-Prefix Priorities: prefix1 is highest, then prefix2 ..."
@@ -101,9 +101,9 @@ ccm_append_orig() {
 }
 
 ccm_main() {
-    local syslibs=; local sysincs=; local ldflags=; local cflags=; local cxxflags=
-    local p=; local v=; local f=; local libdir=; local commands=; local has_orig_pos_arg=
-    local defp=; pathsep=":"
+    syslibs= sysincs= ldflags= cflags= cxxflags=
+    p= v= f= libdir= commands= has_orig_pos_arg=
+    defp= pathsep=":"
 
     while [ $# -gt 0 ]; do
         case "$1" in
