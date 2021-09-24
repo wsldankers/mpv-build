@@ -33,7 +33,7 @@ do_config_or_die() {
     opts=$(var_val config_${p}_opts_config)
 
     if pkg_has $p; then
-        (pkg_load $p && pkg_configure $opts "$@") || err_msg_die "failed to configure $p"
+        (pkg_load $p && pkg_configure $opts "$@"); onerr_msg_die "failed to configure $p"
     elif [ -e scripts/${p}-config ]; then
         scripts/${p}-config $opts "$@" || err_msg_die "failed to configure $p"
     else
@@ -45,7 +45,7 @@ do_build_or_die() {
     opts=$(var_val config_${p}_opts_build)
 
     if pkg_has $p; then
-        (pkg_load $p && pkg_build $opts "$@") || err_msg_die "failed to build $p"
+        (pkg_load $p && pkg_build $opts "$@"); onerr_msg_die "failed to build $p"
     elif [ -e scripts/${p}-build ]; then
         scripts/${p}-build $opts "$@" || err_msg_die "failed to build $p"
     else

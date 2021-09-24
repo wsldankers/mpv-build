@@ -58,6 +58,15 @@ err_msg_die() {
     >&2 printf "%s\n" "$(sgr_if_tty "$err_tty" 31 "${msg_prefix}Error: $1")"
     exit 1
 }
+# $1: string to print. no-op if $? == 0, else same as err_msg_die.
+# useful as `SH_CODE; onerr_msg_die ...' instead of `SH_CODE || err_msg_die ...'
+# so that SH_CODE can use `set -e' (if it's followed by `||' then it can't).
+onerr_msg_die() {
+    set -- "$?" "$@"
+    [ "$1" != 0 ] || return 0
+    >&2 printf "%s\n" "$(sgr_if_tty "$err_tty" 31 "${msg_prefix}Error: $2")"
+    exit "$1"
+}
 
 # $1: string to print
 warn_msg() {
