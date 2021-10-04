@@ -7,12 +7,29 @@ set -e
 BLD_DIR="$config_local_prefix"/tmp/${PKG}_build
 PREFIX="$config_local_prefix"/pkg/$PKG
 
+# our install prefix is meaningless for runtime libraries, so override it.
+# on windows there's convention (and support) of paths relative to the binary.
+# elsewhere it's all over the place (system/package-manager) - don't guess.
+if [ "$config_target_windows" = yes ]; then  # / are replaced with backslashes
+    # standard mainline, without CWD paths for security (./?.lua etc)
+    lpath="!/lua/?.lua;!/lua/?/init.lua;!/?.lua;!/?/init.lua"
+    lcpath="!/?.dll;!/loadall.dll"
+elif [ "$PKG" = lua52 ]; then  # no defaults, with hint
+    lpath="/no_defaults/use_env_LUA_PATH_5_2_or_LUA_PATH"
+    lcpath="/no_defaults/use_env_LUA_CPATH_5_2_or_LUA_CPATH"
+else  # no defaults, with hint (lua51 doesn't check LUA_[C]PATH_5_1)
+    lpath="/no_defaults/use_env_LUA_PATH"
+    lcpath="/no_defaults/use_env_LUA_CPATH"
+fi
+
 # RELATIVE_LOADLIB is no-good cmake-build extension (expand ! in non-win paths).
 # USE_ANSI is mainline lua, only avoids hacks for "faster" cast to int.
 OPTIONS="
     -DBUILD_SHARED_LIBS=OFF
     -DLUA_USE_RELATIVE_LOADLIB=OFF
     -DLUA_USE_ANSI=ON
+    -DLUA_PATH_DEFAULT=$lpath
+    -DLUA_CPATH_DEFAULT=$lcpath
 "
 
 if [ "$config_build_pic" = yes ]; then
