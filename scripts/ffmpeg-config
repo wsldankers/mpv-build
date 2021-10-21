@@ -20,6 +20,9 @@ case "$OPTIONS $*" in
     if pkg-config gnutls ; then
         OPTIONS="$OPTIONS --enable-gnutls"
         echo "Auto-enabling GnuTLS."
+    elif pkg-config mbedtls; then
+        OPTIONS="$OPTIONS --enable-version3 --enable-mbedtls"
+        echo "Auto-enabling Mbed-TLS (creates a GPL-version-3 binary)."
     elif pkg-config libtls ; then
         OPTIONS="$OPTIONS --enable-nonfree --enable-libtls"
         echo "Auto-enabling LibreSSL (creates a non-redistributable binary)."
