@@ -1,5 +1,7 @@
 #! /usr/bin/make -f
 
+export DEB_BUILD_MAINT_OPTIONS := hardening=+all optimize=-lto
+
 # To enable parallel building:
 # You can either set DEB_BUILD_OPTIONS=parallel=<num-procs> in your build environment
 # or provide the -j<numprocs> option to debuild or dpkg-buildpackage, which
