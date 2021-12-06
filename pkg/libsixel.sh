@@ -8,6 +8,7 @@ OPTIONS="
     --enable-static
     --disable-shared
     --disable-tests
+    --without-libcurl
 "
 
 if [ "$config_build_pic" = yes ]; then
