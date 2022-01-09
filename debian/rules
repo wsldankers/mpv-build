@@ -17,6 +17,9 @@ else
 	WAFFLAGS += -j$(NUMJOBS)
 endif
 
+# But don't parallelize this makefile itself:
+.NOTPARALLEL:
+
 # make .PHONY all the targets that have name collisions with the scripts
 # see http://www.debian.org/doc/manuals/maint-guide/dreq.en.html#rules
 .PHONY: clean build install
