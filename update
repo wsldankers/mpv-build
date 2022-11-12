@@ -89,6 +89,7 @@ fetch_checkout() (
         HEAD)         c="refs/remotes/$remote/HEAD"             && f="$f:$c";;
     esac
     git fetch --force "$@" $remote "$f" && git checkout "$c"^0
+    git submodule update --init
 )
 
 # succeeds if $1 dir is a shallow git repo
