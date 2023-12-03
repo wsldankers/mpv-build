@@ -104,25 +104,25 @@ ffmpeg_build: ffmpeg_config
 override_dh_auto_configure: $(filter-out mpv_build,$(projects_build))
 	./build --mode=config mpv -- \
 		--prefix=/usr \
-		--confdir=/etc/mpv \
-		--zshdir=/usr/share/zsh/vendor-completions \
-		--enable-openal \
-		--enable-dvdnav \
-		--enable-cdda
+		-Dopenal=enabled \
+		-Ddvdnav=enabled \
+		-Dcdda=enabled
 
 override_dh_auto_build:
-	./build --mode=build mpv -- $(WAFLAGS)
+	./build --mode=build mpv
 
 MPV_SRC=$(shell ./get-config -- config_mpv_source)
 BUILD_ROOT=$(shell pwd)
 
 DOCSOURCE=$(MPV_SRC)/DOCS
 TOOLSSOURCE=$(MPV_SRC)/TOOLS
-DOCDEST=debian/mpv/usr/share/doc/mpv
+DOCDEST=$(BUILD_ROOT)/debian/mpv/usr/share/doc/mpv
 TOOLSDEST=$(DOCDEST)/TOOLS
 # call waf to install to the debian packageing dir
 override_dh_auto_install:
-	./install mpv -- -v --destdir="$(BUILD_ROOT)/debian/mpv"
+	./install mpv -- --destdir="$(BUILD_ROOT)/debian/mpv"
+
+	env -C "$(BUILD_ROOT)/debian/mpv/usr/share/zsh" mv site-functions vendor-completions
 
 	find "$(DOCSOURCE)" -mindepth 1 -type d \
 	-not -regex '.*man.*' \

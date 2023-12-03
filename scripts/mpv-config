@@ -10,4 +10,4 @@ fi
 set -x
 
 cd "$config_mpv_source"
-./waf configure $OPTIONS "$@"
+exec meson setup build -Dbuildtype=release $OPTIONS "$@"
